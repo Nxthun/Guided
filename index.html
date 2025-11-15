@@ -6,21 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Guided Flashcards</title>
     
-    <!-- Babel Standalone for in-browser JSX/TS transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Markdown and Sanitizer Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.8/dist/purify.min.js"></script>
 
@@ -33,6 +28,7 @@
         --glass-border: rgba(255, 255, 255, 0.3);
         --shadow-color: rgba(0, 0, 0, 0.1);
         --accent-color: #8b5cf6;
+        --bg-animation: none; /* ADDED */
       }
       :root[data-theme='dark'] {
         --bg-gradient: #000000;
@@ -61,11 +57,23 @@
         --shadow-color: rgba(0, 0, 0, 0.25);
         --accent-color: #86efac;
       }
+      
+      /* ADDED KEYFRAME */
+      @keyframes animateBg {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
       body {
         font-family: 'Inter', sans-serif;
         background: var(--bg-gradient);
         color: var(--text-color);
         transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+        
+        /* ADDED/UPDATED */
+        background-size: 400% 400%;
+        animation: var(--bg-animation);
       }
       .glass-card {
         background-color: var(--glass-bg);
@@ -686,6 +694,36 @@
           }
         }, [session, fetchData]);
         
+        // --- MODIFIED SECTION ---
+        
+        const applyTheme = useCallback((theme) => {
+          if (typeof theme === 'string') {
+              // This is a preset theme (e.g., 'light', 'dark')
+              document.documentElement.removeAttribute('style');
+              document.documentElement.setAttribute('data-theme', theme);
+              document.documentElement.style.setProperty('--bg-animation', 'none');
+          } else {
+              // This is a custom theme object
+              document.documentElement.removeAttribute('data-theme');
+              const root = document.documentElement;
+              const { colors, isAnimated, animationDuration } = theme;
+              
+              root.style.setProperty('--bg-gradient', `linear-gradient(120deg, ${colors.bgGradientStart} 0%, ${colors.bgGradientEnd} 100%)`);
+              root.style.setProperty('--text-color', colors.textColor);
+              root.style.setProperty('--text-color-light', colors.textColorLight);
+              root.style.setProperty('--glass-bg', colors.glassBg);
+              root.style.setProperty('--glass-border', colors.glassBorder);
+              root.style.setProperty('--shadow-color', colors.shadowColor);
+              root.style.setProperty('--accent-color', colors.accentColor);
+              
+              if (isAnimated) {
+                  root.style.setProperty('--bg-animation', `animateBg ${animationDuration || '15s'} ease infinite`);
+              } else {
+                  root.style.setProperty('--bg-animation', 'none');
+              }
+          }
+        }, []);
+        
         const presetThemes = [
             { id: 'light', name: 'Default Light', class: 'bg-gradient-to-br from-gray-100 to-gray-200' },
             { id: 'dark', name: 'OLED Dark', class: 'bg-black' },
@@ -693,6 +731,7 @@
             { id: 'forest', name: 'Forest', class: 'bg-gradient-to-br from-green-700 to-green-900' }
         ];
 
+        // This useEffect was MODIFIED
         useEffect(() => {
           const savedCustomThemes = localStorage.getItem('flashcard-custom-themes');
           const loadedCustomThemes = savedCustomThemes ? JSON.parse(savedCustomThemes) : [];
@@ -700,8 +739,16 @@
 
           const savedThemeId = localStorage.getItem('flashcard-active-theme-id') || 'light';
           const customTheme = loadedCustomThemes.find(t => t.id === savedThemeId);
-          if (customTheme) setActiveTheme(customTheme);
-          else setActiveTheme((presetThemes.find(t => t.id === savedThemeId)?.id || 'light'));
+
+          let themeToApply; 
+          if (customTheme) {
+            themeToApply = customTheme;
+            setActiveTheme(customTheme);
+          } else {
+            themeToApply = (presetThemes.find(t => t.id === savedThemeId)?.id || 'light');
+            setActiveTheme(themeToApply);
+          }
+          applyTheme(themeToApply); // Call applyTheme
           
           const savedViewMode = localStorage.getItem('flashcard-view-mode');
           if(savedViewMode) setCardViewMode(savedViewMode);
@@ -712,26 +759,17 @@
           const savedListDensityIndex = localStorage.getItem('flashcard-list-density-index');
           if (savedListDensityIndex) setCardListDensityIndex(parseInt(savedListDensityIndex, 10));
 
-        }, []);
+        }, [applyTheme]); // Added dependency
 
+        // This useEffect was MODIFIED
         useEffect(() => {
-          if (typeof activeTheme === 'string') {
-              document.documentElement.removeAttribute('style');
-              document.documentElement.setAttribute('data-theme', activeTheme);
-          } else {
-              document.documentElement.removeAttribute('data-theme');
-              const root = document.documentElement;
-              const {colors} = activeTheme;
-              root.style.setProperty('--bg-gradient', `linear-gradient(120deg, ${colors.bgGradientStart} 0%, ${colors.bgGradientEnd} 100%)`);
-              root.style.setProperty('--text-color', colors.textColor);
-              root.style.setProperty('--text-color-light', colors.textColorLight);
-              root.style.setProperty('--glass-bg', colors.glassBg);
-              root.style.setProperty('--glass-border', colors.glassBorder);
-              root.style.setProperty('--shadow-color', colors.shadowColor);
-              root.style.setProperty('--accent-color', colors.accentColor);
+          if (activeTheme) { // Check if activeTheme is set
+            applyTheme(activeTheme);
+            localStorage.setItem('flashcard-active-theme-id', typeof activeTheme === 'string' ? activeTheme : activeTheme.id);
           }
-           localStorage.setItem('flashcard-active-theme-id', typeof activeTheme === 'string' ? activeTheme : activeTheme.id);
-        }, [activeTheme]);
+        }, [activeTheme, applyTheme]); // Added dependency
+
+        // --- END MODIFIED SECTION ---
 
         useEffect(() => {
             localStorage.setItem('flashcard-view-mode', cardViewMode);
@@ -1498,57 +1536,102 @@
           }
         }
         
-        const SettingsContent = () => {
-          const defaultThemeColors = {
-              bgGradientStart: '#fdfbfb', bgGradientEnd: '#ebedee', textColor: '#1f2937', textColorLight: '#6b7280',
-              glassBg: 'rgba(255, 255, 255, 0.2)', glassBorder: 'rgba(255, 255, 255, 0.3)',
-              shadowColor: 'rgba(0, 0, 0, 0.1)', accentColor: '#8b5cf6',
+        // --- THIS ENTIRE FUNCTION WAS REPLACED ---
+        const SettingsContent = ({ onThemeSave, onThemeDelete, allThemes, activeTheme, setActiveTheme, applyTheme }) => {
+          const defaultThemeProps = {
+              colors: {
+                  bgGradientStart: '#fdfbfb', bgGradientEnd: '#ebedee', textColor: '#1f2937', textColorLight: '#6b7280',
+                  glassBg: 'rgba(255, 255, 255, 0.2)', glassBorder: 'rgba(255, 255, 255, 0.3)',
+                  shadowColor: 'rgba(0, 0, 0, 0.1)', accentColor: '#8b5cf6',
+              },
+              isAnimated: false,
+              animationDuration: '15s'
           };
           const [editingTheme, setEditingTheme] = useState(null);
 
+          // Live preview effect
+          useEffect(() => {
+              if (editingTheme) {
+                  applyTheme(editingTheme);
+              }
+          }, [editingTheme, applyTheme]);
+
           const handleStartEditing = (theme) => {
-              if(theme) {
-                  setEditingTheme(theme);
+              if (theme) {
+                  // Ensure old themes get new properties
+                  setEditingTheme({
+                      ...defaultThemeProps,
+                      ...theme,
+                      colors: { ...defaultThemeProps.colors, ...theme.colors },
+                  });
               } else {
                   setEditingTheme({
                       id: `custom-${Date.now()}`,
                       name: 'My New Theme',
-                      colors: defaultThemeColors,
-                  })
+                      ...defaultThemeProps,
+                  });
               }
-          }
+          };
 
           const handleFormChange = (e) => {
               if (!editingTheme) return;
-              const { name, value } = e.target;
+              const { name, value, type, checked } = e.target;
+              
               if (name === 'name') {
                   setEditingTheme({ ...editingTheme, name: value });
+              } else if (name === 'isAnimated') {
+                  setEditingTheme({ ...editingTheme, isAnimated: checked });
+              } else if (name === 'animationDuration') {
+                  setEditingTheme({ ...editingTheme, animationDuration: value });
               } else {
+                  // It's a color
                   setEditingTheme({ ...editingTheme, colors: { ...editingTheme.colors, [name]: value } });
               }
-          }
+          };
 
           const handleSaveAndApply = () => {
               if (editingTheme) {
-                  handleCustomThemeSave(editingTheme);
+                  onThemeSave(editingTheme); // This will set activeTheme
+                  setEditingTheme(null);
               }
-          }
+          };
           
           const handleDelete = () => {
               if(editingTheme) {
-                  handleCustomThemeDelete(editingTheme.id);
+                  onThemeDelete(editingTheme.id); // This will reset activeTheme if needed
                   setEditingTheme(null);
               }
-          }
+          };
 
-          const ColorInput = ({label, name, value}) => (
+          const handleCancel = () => {
+              setEditingTheme(null);
+              applyTheme(activeTheme); // Re-apply the saved active theme
+          };
+
+          const ColorInput = ({label, name, value, isText = false}) => (
               <div className="flex items-center justify-between">
                   <label className="text-sm">{label}</label>
-                  <input type="color" name={name} value={value} onChange={handleFormChange} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent" />
+                  {isText ? (
+                      <input 
+                          type="text" 
+                          name={name} 
+                          value={value} 
+                          onChange={handleFormChange} 
+                          className="w-32 bg-white/20 border border-white/30 rounded-md p-1 text-xs text-[--text-color] focus:ring-1 focus:ring-[--accent-color] focus:outline-none"
+                          placeholder="e.g., rgba(255, 255, 255, 0.2)"
+                      />
+                  ) : (
+                      <input 
+                          type="color" 
+                          name={name} 
+                          value={value} 
+                          onChange={handleFormChange} 
+                          className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent" 
+                      />
+                  )}
               </div>
-          )
+          );
           
-          const allThemes = [...presetThemes, ...customThemes];
           const currentThemeId = typeof activeTheme === 'string' ? activeTheme : activeTheme.id;
 
           return (
@@ -1561,41 +1644,76 @@
                           const isActive = currentThemeId === theme.id;
                           return (
                               <div key={theme.id} className="relative group">
-                                   <button onClick={() => setActiveTheme(isPreset ? theme.id : theme)} className={`w-full aspect-square rounded-lg flex items-center justify-center text-center p-2 border-2 transition-all ${isActive ? 'border-[--accent-color]' : 'border-transparent hover:border-white/50'}`}>
+                                   <button 
+                                      onClick={() => {
+                                        setEditingTheme(null);
+                                        setActiveTheme(isPreset ? theme.id : theme);
+                                      }} 
+                                      className={`w-full aspect-square rounded-lg flex items-center justify-center text-center p-2 border-2 transition-all ${isActive && !editingTheme ? 'border-[--accent-color]' : 'border-transparent hover:border-white/50'}`}
+                                    >
                                       <div className={`w-full h-full rounded-md ${isPreset ? theme.class : ''}`} style={!isPreset ? { background: `linear-gradient(135deg, ${theme.colors.bgGradientStart}, ${theme.colors.bgGradientEnd})`} : {}}></div>
                                    </button>
                                    <p className="text-xs text-center mt-1 truncate">{theme.name}</p>
                                   {!isPreset && (
-                                      <button onClick={() => handleStartEditing(theme)} className="absolute top-1 right-1 p-1 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={() => handleStartEditing(theme)} className={`absolute top-1 right-1 p-1 bg-black/30 rounded-full transition-opacity ${editingTheme?.id === theme.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                           <Icon name="edit" className="w-3 h-3 text-white"/>
                                       </button>
                                   )}
                               </div>
                           )
                       })}
-                       <button onClick={() => handleStartEditing()} className="w-full aspect-square rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-[--text-color-light]/50 hover:border-[--text-color] transition-colors">
+                       <button onClick={() => handleStartEditing()} className={`w-full aspect-square rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-[--text-color-light]/50 hover:border-[--text-color] transition-colors ${editingTheme && editingTheme.id.startsWith('custom-') ? 'border-[--accent-color]' : 'hover:border-[--text-color]'}`}>
                           <Icon name="plus" className="w-8 h-8 text-[--text-color-light]"/>
                           <span className="text-xs mt-1">Create</span>
                       </button>
                   </div>
 
                   {editingTheme && (
-                      <div className="p-4 rounded-lg bg-white/10 mt-4 animate-fadeIn">
+                      <div className="p-4 rounded-lg bg-white/10 mt-4">
                           <h4 className="font-bold mb-3">{editingTheme.id.startsWith('custom-') ? 'Create New Theme' : 'Edit Theme'}</h4>
                           <FormInput id="name" label="Theme Name" name="name" value={editingTheme.name} onChange={handleFormChange} />
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
                               <ColorInput label="Gradient Start" name="bgGradientStart" value={editingTheme.colors.bgGradientStart} />
                               <ColorInput label="Gradient End" name="bgGradientEnd" value={editingTheme.colors.bgGradientEnd} />
                               <ColorInput label="Text" name="textColor" value={editingTheme.colors.textColor} />
                               <ColorInput label="Text Light" name="textColorLight" value={editingTheme.colors.textColorLight} />
                               <ColorInput label="Accent" name="accentColor" value={editingTheme.colors.accentColor} />
+                              <ColorInput label="Glass BG" name="glassBg" value={editingTheme.colors.glassBg} isText={true} />
+                              <ColorInput label="Glass Border" name="glassBorder" value={editingTheme.colors.glassBorder} isText={true} />
+                              <ColorInput label="Shadow" name="shadowColor" value={editingTheme.colors.shadowColor} isText={true} />
                           </div>
+
+                          <div className="h-px bg-white/20 my-4"></div>
+                          
+                          <h4 className="font-bold mb-3">Animation</h4>
+                          <div className="flex items-center justify-between mb-3">
+                              <label htmlFor="isAnimated" className="text-sm font-medium">Animated Background</label>
+                              <input 
+                                  type="checkbox" 
+                                  id="isAnimated" 
+                                  name="isAnimated"
+                                  checked={editingTheme.isAnimated} 
+                                  onChange={handleFormChange} 
+                                  className="h-5 w-5 rounded accent-[--accent-color] bg-white/20 border-white/30 focus:ring-[--accent-color]" 
+                              />
+                          </div>
+                          {editingTheme.isAnimated && (
+                              <FormInput 
+                                  id="animationDuration" 
+                                  label="Animation Duration (e.g., 15s)" 
+                                  name="animationDuration" 
+                                  value={editingTheme.animationDuration} 
+                                  onChange={handleFormChange} 
+                              />
+                          )}
+
                            <div className="flex justify-between items-center mt-4">
                               <div>
                                {!editingTheme.id.startsWith('custom-') && <button onClick={handleDelete} className="text-red-400 text-sm font-semibold hover:underline">Delete</button>}
                               </div>
                               <div className="flex gap-2">
-                                  <CuteButton onClick={() => setEditingTheme(null)} className="!py-1 !px-3 !from-white/20 !to-white/10">Cancel</CuteButton>
+                                  <CuteButton onClick={handleCancel} className="!py-1 !px-3 !from-white/20 !to-white/10">Cancel</CuteButton>
                                   <CuteButton onClick={handleSaveAndApply} className="!py-1 !px-3">Save & Apply</CuteButton>
                               </div>
                           </div>
@@ -1604,6 +1722,7 @@
               </div>
           )
         }
+        // --- END REPLACED FUNCTION ---
 
         const renderModalContent = () => {
           switch(modal.type) {
@@ -1648,7 +1767,15 @@
               </div>
             );
             case 'importCards': return <ImportCardsForm onImport={handleBulkAddCards} />;
-            case 'settings': return <SettingsContent />;
+            // --- THIS LINE WAS MODIFIED ---
+            case 'settings': return <SettingsContent 
+                                        onThemeSave={handleCustomThemeSave}
+                                        onThemeDelete={handleCustomThemeDelete}
+                                        allThemes={[...presetThemes, ...customThemes]}
+                                        activeTheme={activeTheme}
+                                        setActiveTheme={setActiveTheme}
+                                        applyTheme={applyTheme}
+                                    />;
             default: return null;
           }
         }
