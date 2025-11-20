@@ -2,100 +2,105 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v16H6.5a2.5 2.5 0 0 1 0-5H20'/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Guided Flashcards</title>
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.8/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
       :root {
         --bg-gradient: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
         --text-color: #1f2937;
         --text-color-light: #6b7280;
-        --glass-bg: rgba(255, 255, 255, 0.2);
-        --glass-border: rgba(255, 255, 255, 0.3);
-        --shadow-color: rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.5);
+        --shadow-color: rgba(0, 0, 0, 0.05);
         --accent-color: #8b5cf6;
-        --bg-animation: none; /* ADDED */
+        --bg-animation: none;
       }
       :root[data-theme='dark'] {
-        --bg-gradient: #000000;
-        --text-color: #f9fafb;
-        --text-color-light: #9ca3af;
-        --glass-bg: rgba(31, 41, 55, 0.2);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --shadow-color: rgba(0, 0, 0, 0.2);
+        --bg-gradient: #0f172a;
+        --text-color: #f8fafc;
+        --text-color-light: #94a3b8;
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --shadow-color: rgba(0, 0, 0, 0.3);
         --accent-color: #a78bfa;
       }
       :root[data-theme='kirby'] {
-        --bg-gradient: linear-gradient(120deg, #ffc0cb 0%, #87ceeb 100%);
-        --text-color: #1e244d;
-        --text-color-light: #4a517e;
-        --glass-bg: rgba(255, 255, 255, 0.3);
-        --glass-border: rgba(255, 255, 255, 0.4);
-        --shadow-color: rgba(0, 0, 0, 0.1);
-        --accent-color: #e879f9;
+        --bg-gradient: linear-gradient(120deg, #fbc2eb 0%, #a6c1ee 100%);
+        --text-color: #1e293b;
+        --text-color-light: #475569;
+        --glass-bg: rgba(255, 255, 255, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.6);
+        --shadow-color: rgba(168, 85, 247, 0.15);
+        --accent-color: #d946ef;
       }
       :root[data-theme='forest'] {
-        --bg-gradient: linear-gradient(120deg, #2d5a2d 0%, #0e2a0e 100%);
-        --text-color: #f0fff0;
-        --text-color-light: #a8d5a8;
-        --glass-bg: rgba(45, 90, 45, 0.2);
-        --glass-border: rgba(240, 255, 240, 0.2);
+        --bg-gradient: linear-gradient(120deg, #134e5e 0%, #71b280 100%);
+        --text-color: #ecfdf5;
+        --text-color-light: #a7f3d0;
+        --glass-bg: rgba(6, 78, 59, 0.6);
+        --glass-border: rgba(52, 211, 153, 0.2);
         --shadow-color: rgba(0, 0, 0, 0.25);
-        --accent-color: #86efac;
+        --accent-color: #34d399;
       }
       
-      /* ADDED KEYFRAME */
       @keyframes animateBg {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
       }
 
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
       body {
         font-family: 'Inter', sans-serif;
         background: var(--bg-gradient);
         color: var(--text-color);
-        transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
-        
-        /* ADDED/UPDATED */
+        transition: background 0.5s ease, color 0.3s ease;
         background-size: 400% 400%;
         animation: var(--bg-animation);
+        min-height: 100vh;
       }
+      
       .glass-card {
         background-color: var(--glass-bg);
         border: 1px solid var(--glass-border);
-        box-shadow: 0 8px 32px 0 var(--shadow-color);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        background-image: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent 40%);
-        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        box-shadow: 0 4px 20px -2px var(--shadow-color);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
+      
       .glass-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 40px 0 var(--shadow-color);
+        box-shadow: 0 12px 30px -4px var(--shadow-color);
       }
+
+      /* Card Flip Styles */
       .card-flip-container {
-        perspective: 1000px;
+        perspective: 1500px;
       }
       .card-flipper {
         position: relative;
         width: 100%;
         height: 100%;
-        transition: transform 0.6s;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         transform-style: preserve-3d;
       }
       .card-flipper.is-flipped {
@@ -114,100 +119,164 @@
       .card-back {
         transform: rotateY(180deg);
       }
-      /* Drag and Drop Styles */
+
+      /* Drag and Drop */
       .dragging {
         opacity: 0.5;
-        transform: scale(1.05);
+        transform: scale(0.95);
+        cursor: grabbing;
       }
-      .drag-placeholder {
-        background-color: rgba(255, 255, 255, 0.2);
-        border: 2px dashed var(--glass-border);
-        border-radius: 1rem; /* same as cards */
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
       }
-      /* Custom Slider Styles */
-      input[type="range"] {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 100%;
-        height: 6px;
-        background: var(--glass-bg);
-        border-radius: 5px;
-        border: 1px solid var(--glass-border);
-        outline: none;
-        cursor: pointer;
+      ::-webkit-scrollbar-track {
+        background: transparent; 
       }
-      input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        background: white;
-        border-radius: 50%;
-        border: 2px solid var(--accent-color);
-        cursor: pointer;
-        margin-top: -8px; /* Offset to center thumb on track */
-        box-shadow: 0 0 5px var(--accent-color);
-        transition: transform 0.1s ease-in-out;
+      ::-webkit-scrollbar-thumb {
+        background: var(--glass-border); 
+        border-radius: 4px;
       }
-       input[type="range"]::-webkit-slider-thumb:active {
-        transform: scale(1.2);
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-color-light); 
       }
-      input[type="range"]::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
-        background: white;
-        border-radius: 50%;
-        border: 2px solid var(--accent-color);
-        cursor: pointer;
-        box-shadow: 0 0 5px var(--accent-color);
-        transition: transform 0.1s ease-in-out;
+
+      /* Skeleton Loader */
+      .skeleton {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--glass-bg);
+        border-radius: 0.5rem;
       }
-      input[type="range"]::-moz-range-thumb:active {
-        transform: scale(1.2);
+      .skeleton::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        animation: shimmer 1.5s infinite;
       }
+
       /* Title Animation */
       @keyframes bounce-in {
         0% { transform: scale(0.5); opacity: 0; }
-        50% { transform: scale(1.1); }
+        60% { transform: scale(1.1); }
         100% { transform: scale(1); opacity: 1; }
       }
       .title-char {
         display: inline-block;
-        animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: bounce-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         opacity: 0;
         white-space: pre; 
       }
+
+      /* Markdown Styles Override */
+      .prose img {
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .prose a {
+        color: var(--accent-color);
+        text-decoration: none;
+      }
+      .prose a:hover {
+        text-decoration: underline;
+      }
+      
+      /* Toast Animations */
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+      .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+      .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
-    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.81.1"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+    </script>
 </head>
   <body>
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+      import React, { useState, useEffect, useMemo, useCallback, useRef, createContext, useContext, memo } from 'react';
       import ReactDOM from 'react-dom/client';
       import { createClient } from '@supabase/supabase-js';
 
-      // --- From services/supabaseClient.ts ---
+      // --- Configuration ---
       const supabaseUrl = 'https://jccslseigqjercgoqocb.supabase.co';
       const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjY3Nsc2VpZ3FqZXJjZ29xb2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwODIxNTcsImV4cCI6MjA3ODY1ODE1N30.HuepsMd_fMgJdvX7usXHDTKqRdMrqsuDuML0ZcL4FPs';
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
-      // --- Helper Functions (hoisted from App.tsx) ---
+
+      // --- Contexts ---
+      const ToastContext = createContext();
+
+      const ToastProvider = ({ children }) => {
+        const [toasts, setToasts] = useState([]);
+
+        const addToast = useCallback((message, type = 'info', duration = 3000) => {
+          const id = Date.now();
+          setToasts(prev => [...prev, { id, message, type }]);
+          setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+          }, duration);
+        }, []);
+
+        return (
+          <ToastContext.Provider value={{ addToast }}>
+            {children}
+            <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+              {toasts.map(toast => (
+                <div key={toast.id} className={`toast-enter pointer-events-auto glass-card px-4 py-3 rounded-lg shadow-lg border-l-4 flex items-center gap-3 min-w-[300px] ${
+                  toast.type === 'error' ? 'border-red-500' : 
+                  toast.type === 'success' ? 'border-green-500' : 
+                  'border-[--accent-color]'
+                }`}>
+                  <div className={`p-1 rounded-full ${
+                     toast.type === 'error' ? 'bg-red-500/20 text-red-500' : 
+                     toast.type === 'success' ? 'bg-green-500/20 text-green-500' : 
+                     'bg-[--accent-color]/20 text-[--accent-color]'
+                  }`}>
+                    {toast.type === 'error' ? <Icon name="alert-circle" className="w-4 h-4"/> : 
+                     toast.type === 'success' ? <Icon name="check" className="w-4 h-4"/> : 
+                     <Icon name="info" className="w-4 h-4"/>}
+                  </div>
+                  <p className="text-sm font-medium text-[--text-color]">{toast.message}</p>
+                </div>
+              ))}
+            </div>
+          </ToastContext.Provider>
+        );
+      };
+
+      const useToast = () => useContext(ToastContext);
+
+      // --- Utilities ---
       const renderMarkdown = (markdown) => {
           if (!markdown) return { __html: '' };
           const dirty = window.marked.parse(markdown);
           const clean = window.DOMPurify.sanitize(dirty);
           return { __html: clean };
+      };
+      
+      // 4. Image Optimization Helper
+      const getOptimizedImageUrl = (url, width = 400) => {
+          if (!url) return null;
+          // Basic implementation - appends query params for CDNs that support it
+          return `${url}?width=${width}&quality=80&resize=contain`; 
       };
 
       const fileToDataUrl = (file) => {
@@ -219,9 +288,9 @@
         });
       };
 
-      // --- From components/Icon.tsx ---
+      // --- Components ---
       const Icon = ({ name, className = 'w-6 h-6' }) => {
-        const icons = {
+         const icons = {
           folder: <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>,
           deck: <><path d="M20 10c0-2-2-4-4-4H8c-2.2 0-4 1.8-4 4s1.8 4 4 4h8c2 0 4-2 4-4Z"></path><path d="M4 14c0 2.2 1.8 4 4 4h8c2 0 4-2 4-4"></path><path d="M4 6c0-2.2 1.8-4 4-4h8c2 0 4 2 4 4"></path></>,
           card: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><line x1="3" x2="21" y1="9" y2="9"></line></>,
@@ -231,90 +300,54 @@
           close: <><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></>,
           settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></>,
           logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" x2="9" y1="12" y2="12"></line></>,
-          back: <path d="m15 18-6-6 6-6"></path>,
           study: <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v16H6.5a2.5 2.5 0 0 1 0-5H20"></path>,
           import: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></>,
           export: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></>,
-          next: <path d="m9 18 6-6-6-6"></path>,
-          prev: <path d="m15 18-6-6 6-6"></path>,
-          shuffle: <><path d="M2 18h1.4c1.3 0 2.5-.6 3.4-1.6l1.8-2.1c.9-1 2.2-1.6 3.5-1.6h3.8c1.3 0 2.5-.6 3.4-1.6l1.8-2.1c.9-1 2.2-1.6 3.5-1.6H22"></path><path d="m18 2 4 4-4 4"></path><path d="M2 6h1.4c1.3 0 2.5.6 3.4 1.6l1.8 2.1c.9 1 2.2 1.6 3.5 1.6h3.8c1.3 0 2.5.6 3.4 1.6l1.8 2.1c.9 1 2.2 1.6 3.5 1.6H22"></path><path d="m18 22-4-4 4-4"></path></>,
           search: <><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></>,
           check: <path d="M20 6 9 17l-5-5"></path>,
-          copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></>,
-          'grip-vertical': <><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></>,
           image: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></>,
           'layout-grid': <><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></>,
           'list': <><line x1="8" x2="21" y1="6" y2="6"></line><line x1="8" x2="21" y1="12" y2="12"></line><line x1="8" x2="21" y1="18" y2="18"></line><line x1="3" x2="3.01" y1="6" y2="6"></line><line x1="3" x2="3.01" y1="12" y2="12"></line><line x1="3" x2="3.01" y1="18" y2="18"></line></>,
           'chevron-down': <path d="m6 9 6 6 6-6"></path>,
           'minus': <path d="M5 12h14"></path>,
           'refresh-ccw': <><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></>,
-          'chevrons-up-down': <><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></>
+          'chevrons-up-down': <><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></>,
+          'alert-circle': <><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></>,
+          'info': <><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="16" y2="12"></line><line x1="12" x2="12.01" y1="8" y2="8"></line></>,
+          'grip-vertical': <><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></>
         };
-
         return (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             {icons[name]}
           </svg>
         );
       };
 
-      // --- From components/Modal.tsx ---
+      const Skeleton = ({ className }) => <div className={`skeleton ${className}`}></div>;
+
       const Modal = ({ isOpen, onClose, title, children }) => {
         const [show, setShow] = React.useState(false);
 
         useEffect(() => {
-          if (isOpen) {
-            setShow(true);
-          } else {
-            // Allow fade-out animation
-            const timer = setTimeout(() => setShow(false), 300);
-            return () => clearTimeout(timer);
-          }
+          if (isOpen) setShow(true);
+          else setTimeout(() => setShow(false), 300);
         }, [isOpen]);
 
         useEffect(() => {
-          const handleEsc = (event) => {
-            if (event.key === 'Escape') {
-              onClose();
-            }
-          };
-          window.addEventListener('keydown', handleEsc);
-          return () => {
-            window.removeEventListener('keydown', handleEsc);
-          };
-        }, [onClose]);
+            if (!isOpen) return;
+            const handleEsc = (e) => e.key === 'Escape' && onClose();
+            window.addEventListener('keydown', handleEsc);
+            return () => window.removeEventListener('keydown', handleEsc);
+        }, [isOpen, onClose]);
 
         if (!show) return null;
 
         return (
-          <div
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-            onClick={onClose}
-          >
-            <div
-              className={`glass-card rounded-2xl w-full max-w-md m-4 p-6 text-[--text-color] transform transition-all duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-full hover:bg-white/20 transition-colors"
-                  aria-label="Close modal"
-                >
-                  <Icon name="close" className="w-6 h-6" />
-                </button>
+          <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}>
+            <div className={`glass-card rounded-2xl w-full max-w-md m-4 p-6 text-[--text-color] transform transition-all duration-300 ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+                <button onClick={onClose} className="p-2 rounded-full hover:bg-black/5 transition-colors"><Icon name="close" className="w-5 h-5" /></button>
               </div>
               <div>{children}</div>
             </div>
@@ -322,7 +355,6 @@
         );
       };
       
-      // --- From components/Dropdown.tsx ---
       const Dropdown = ({ options, value, onChange, className = '', variant = 'default' }) => {
         const [isOpen, setIsOpen] = useState(false);
         const dropdownRef = useRef(null);
@@ -330,60 +362,28 @@
 
         useEffect(() => {
           const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-              setIsOpen(false);
-            }
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
           };
-          const handleEsc = (event) => {
-            if (event.key === 'Escape') {
-              setIsOpen(false);
-            }
-          };
-          
           document.addEventListener('mousedown', handleClickOutside);
-          window.addEventListener('keydown', handleEsc);
-
-          return () => {
-              document.removeEventListener('mousedown', handleClickOutside);
-              window.removeEventListener('keydown', handleEsc);
-          }
+          return () => document.removeEventListener('mousedown', handleClickOutside);
         }, []);
 
         const handleSelect = (optionValue) => {
           onChange(optionValue);
           setIsOpen(false);
         };
-        
-        const triggerBaseClasses = "w-full flex items-center justify-between text-[--text-color] focus:ring-2 focus:ring-[--accent-color] focus:outline-none transition-all duration-200";
-        const variantTriggerClasses = {
-          default: "bg-white/10 border border-white/20 rounded-full py-2 px-4 font-medium",
-          compact: "bg-transparent text-sm font-bold px-1"
-        };
-
-        const dropdownPanelClasses = variant === 'compact' ? 'w-28 right-0' : 'w-full';
 
         return (
           <div className={`relative ${className}`} ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className={`${triggerBaseClasses} ${variantTriggerClasses[variant]}`}
-              aria-haspopup="listbox"
-              aria-expanded={isOpen}
-            >
+            <button type="button" onClick={() => setIsOpen(!isOpen)} className={`w-full flex items-center justify-between text-[--text-color] focus:outline-none transition-all duration-200 ${variant === 'compact' ? 'text-sm font-bold px-1' : 'bg-white/10 border border-[--glass-border] hover:bg-white/20 rounded-full py-2 px-4 font-medium'}`}>
               <span>{selectedOption?.label}</span>
-              <Icon name="chevron-down" className={`w-5 h-5 transition-transform text-[--text-color-light] ${isOpen ? 'rotate-180' : ''}`} />
+              <Icon name="chevron-down" className={`w-5 h-5 ml-2 transition-transform text-[--text-color-light] ${isOpen ? 'rotate-180' : ''}`} />
             </button>
-
-            <div className={`absolute z-20 top-full mt-2 glass-card rounded-xl p-1.5 shadow-lg transition-all duration-200 ease-out origin-top ${dropdownPanelClasses} ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                <ul className="space-y-1" role="listbox">
+            <div className={`absolute z-20 top-full mt-2 glass-card rounded-xl p-1.5 shadow-xl transition-all duration-200 ease-out origin-top w-full min-w-[150px] ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                <ul className="space-y-1">
                   {options.map(option => (
-                    <li key={option.value} role="option" aria-selected={value === option.value}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelect(option.value)}
-                        className={`w-full text-left p-2 rounded-md hover:bg-white/20 transition-colors flex justify-between items-center text-sm font-medium ${value === option.value ? 'text-[--accent-color]' : 'text-[--text-color]'}`}
-                      >
+                    <li key={option.value}>
+                      <button type="button" onClick={() => handleSelect(option.value)} className={`w-full text-left p-2 rounded-lg hover:bg-[--accent-color]/10 transition-colors flex justify-between items-center text-sm font-medium ${value === option.value ? 'text-[--accent-color]' : 'text-[--text-color]'}`}>
                         {option.label}
                         {value === option.value && <Icon name="check" className="w-4 h-4" />}
                       </button>
@@ -395,11 +395,9 @@
         );
       };
 
-      // --- From components/StudyModal.tsx ---
       const StudyModal = ({ isOpen, onClose, deckName, cards: initialCards }) => {
         const [show, setShow] = useState(false);
         const [isFlipped, setIsFlipped] = useState(false);
-        
         const [unseenCards, setUnseenCards] = useState([]);
         const [learningCards, setLearningCards] = useState([]);
         const [completedCards, setCompletedCards] = useState([]);
@@ -410,7 +408,6 @@
 
         const startSession = useCallback((shouldShuffle = true) => {
           const cardsToStudy = shouldShuffle ? shuffle(initialCards) : initialCards;
-          
           if (cardsToStudy.length > 0) {
             setCurrentCard(cardsToStudy[0]);
             setUnseenCards(cardsToStudy.slice(1));
@@ -418,7 +415,6 @@
             setCurrentCard(null);
             setUnseenCards([]);
           }
-          
           setLearningCards([]);
           setCompletedCards([]);
           setIsFlipped(false);
@@ -437,7 +433,6 @@
         
         const pickNextCard = useCallback((currentUnseen, currentLearning) => {
             setIsFlipped(false);
-            
             setTimeout(() => {
                 if (currentUnseen.length > 0) {
                     setCurrentCard(currentUnseen[0]);
@@ -449,166 +444,431 @@
                 } else {
                     setCurrentCard(null);
                     setIsSessionComplete(true);
+                    window.confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 }
-            }, 150);
+            }, 200);
         }, []);
 
         const handleRate = useCallback((rating) => {
             if (!currentCard) return;
-
-            if (rating === 'again') {
-                setLearningCards(prev => [...prev, currentCard]);
-            } else {
-                setCompletedCards(prev => [...prev, currentCard]);
-            }
-            
+            if (rating === 'again') setLearningCards(prev => [...prev, currentCard]);
+            else setCompletedCards(prev => [...prev, currentCard]);
             pickNextCard(unseenCards, learningCards);
         }, [currentCard, unseenCards, learningCards, pickNextCard]);
 
         useEffect(() => {
           const handleKeyDown = (event) => {
             if (!isOpen || isSessionComplete || !currentCard) return;
-
-            if (event.key === ' ') {
+            if (event.key === ' ' || event.key === 'Enter') {
               event.preventDefault();
               setIsFlipped((f) => !f);
             }
-
             if (isFlipped) {
-                if (event.key === '1') handleRate('again');
-                if (event.key === '2') handleRate('good');
-                if (event.key === '3') handleRate('easy');
+                if (event.key === '1' || event.key === 'ArrowLeft') handleRate('again');
+                if (event.key === '2' || event.key === 'ArrowDown') handleRate('good');
+                if (event.key === '3' || event.key === 'ArrowRight') handleRate('easy');
             }
-
             if (event.key === 'Escape') onClose();
           };
-
           window.addEventListener('keydown', handleKeyDown);
           return () => window.removeEventListener('keydown', handleKeyDown);
         }, [isOpen, isSessionComplete, currentCard, isFlipped, handleRate, onClose]);
         
-        const CardFaceContent = ({ content, image }) => (
-          <div className="glass-card rounded-2xl w-full h-full p-6 flex flex-col items-center justify-center overflow-y-auto">
+        const CardFaceContent = ({ content, image, label }) => (
+          <div className="glass-card rounded-2xl w-full h-full p-8 flex flex-col items-center justify-center overflow-hidden relative shadow-2xl border-[--glass-border]">
+               <div className="absolute top-4 left-4 text-xs font-bold uppercase tracking-widest text-[--text-color-light] opacity-50">{label}</div>
               {image && (
-                  <img src={image} alt="Card content" className="max-w-full max-h-48 object-contain rounded-lg mb-4"/>
+                  <img src={getOptimizedImageUrl(image)} alt="Card content" className="max-w-full max-h-[40%] object-contain rounded-lg mb-6 shadow-sm"/>
               )}
-              <div 
-                  className="prose prose-xl text-[--text-color] text-center max-w-none" 
-                  dangerouslySetInnerHTML={renderMarkdown(content)}
-              ></div>
+              <div className="w-full flex-1 flex items-center justify-center overflow-y-auto custom-scrollbar">
+                  <div className="prose prose-lg text-[--text-color] text-center max-w-none" dangerouslySetInnerHTML={renderMarkdown(content)}></div>
+              </div>
           </div>
         );
 
         const totalCards = initialCards.length;
-        const remainingInQueue = unseenCards.length + learningCards.length;
         const progress = totalCards > 0 ? (completedCards.length / totalCards) * 100 : 0;
         
         if (!show) return null;
 
-        const renderContent = () => {
-          if (isSessionComplete) {
-              return (
-                  <div className="glass-card rounded-2xl w-full h-full p-6 flex flex-col items-center justify-center text-center">
-                      <Icon name="check" className="w-20 h-20 text-green-400 mb-4" />
-                      <h3 className="text-3xl font-bold text-[--text-color]">Deck Complete!</h3>
-                      <p className="text-[--text-color-light] mb-8">You've finished this study session.</p>
-                      <div className="flex gap-4">
-                          <button onClick={() => startSession()} className="bg-[--glass-bg] border border-[--glass-border] shadow-lg py-3 px-6 rounded-full hover:scale-105 active:scale-100 transition-transform flex items-center gap-2 text-[--text-color] font-semibold">
-                              <Icon name="refresh-ccw" className="w-5 h-5" />
-                              Study Again
-                          </button>
-                          <button onClick={onClose} className="bg-[--accent-color]/80 text-white shadow-lg py-3 px-6 rounded-full hover:scale-105 active:scale-100 transition-transform font-semibold">
-                              Finish
-                          </button>
-                      </div>
-                  </div>
-              );
-          }
-          
-          if (!currentCard) {
-              return (
-                   <div className="glass-card rounded-2xl w-full h-full p-6 flex flex-col items-center justify-center text-center">
-                      <Icon name="card" className="w-16 h-16 text-[--text-color-light] mb-4" />
-                      <h3 className="text-2xl font-bold text-[--text-color]">This deck is empty.</h3>
-                      <p className="text-[--text-color-light]">Add some cards to start studying!</p>
-                  </div>
-              )
-          }
-
-          return (
-              <>
-                  <div className="w-full h-full card-flip-container" onClick={() => setIsFlipped(!isFlipped)}>
-                      <div className={`card-flipper ${isFlipped ? 'is-flipped' : ''}`}>
-                          <div className="card-face card-front">
-                              <CardFaceContent content={currentCard.front} image={currentCard.front_image_url} />
-                          </div>
-                          <div className="card-face card-back">
-                              <CardFaceContent content={currentCard.back} image={currentCard.back_image_url} />
-                          </div>
-                      </div>
-                  </div>
-                  <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm flex justify-around items-center p-4 transition-all duration-300 ease-in-out ${isFlipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-                      <button onClick={() => handleRate('again')} className="flex flex-col items-center gap-2 text-red-400 hover:scale-110 transition-transform font-semibold p-2">
-                          <span className="py-2 px-6 rounded-full bg-red-400/20 border border-red-400/30">Again</span>
-                          <span className="text-xs text-white/70">Press 1</span>
-                      </button>
-                       <button onClick={() => handleRate('good')} className="flex flex-col items-center gap-2 text-sky-400 hover:scale-110 transition-transform font-semibold p-2">
-                          <span className="py-2 px-6 rounded-full bg-sky-400/20 border border-sky-400/30">Good</span>
-                          <span className="text-xs text-white/70">Press 2</span>
-                      </button>
-                       <button onClick={() => handleRate('easy')} className="flex flex-col items-center gap-2 text-green-400 hover:scale-110 transition-transform font-semibold p-2">
-                          <span className="py-2 px-6 rounded-full bg-green-400/20 border border-green-400/30">Easy</span>
-                          <span className="text-xs text-white/70">Press 3</span>
-                      </button>
-                  </div>
-              </>
-          );
-        }
-
         return (
-          <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 p-4 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
-            <div className={`w-full max-w-3xl flex flex-col transition-all duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-              <div className="flex justify-between items-center mb-2 px-2 text-white">
-                <div className="text-left">
-                  <h2 className="text-2xl font-bold">{deckName}</h2>
-                   {totalCards > 0 && !isSessionComplete &&
-                      <p className="text-lg opacity-80">
-                          {remainingInQueue + (currentCard ? 1 : 0)} remaining
-                          <span className="mx-2 text-white/50">|</span>
-                          {learningCards.length} reviewing
-                      </p>
-                   }
+          <div className={`fixed inset-0 z-[60] flex flex-col items-center justify-center bg-[#0f0f11] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`w-full max-w-4xl h-full max-h-screen flex flex-col p-4 transition-all duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">{deckName}</h2>
+                   {!isSessionComplete && (
+                       <div className="flex items-center gap-3 text-sm text-gray-400">
+                           <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div>{unseenCards.length} new</span>
+                           <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div>{learningCards.length} learning</span>
+                           <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-400"></div>{completedCards.length} done</span>
+                       </div>
+                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {totalCards > 0 &&
-                      <button onClick={() => startSession()} className="p-2 rounded-full hover:bg-white/20 transition-colors" aria-label="Restart session">
-                          <Icon name="refresh-ccw" className="w-6 h-6" />
-                      </button>
-                  }
-                  <button onClick={onClose} className="p-2 rounded-full hover:bg-white/20 transition-colors" aria-label="Close study session">
-                    <Icon name="close" className="w-8 h-8" />
-                  </button>
-                </div>
+                <button onClick={onClose} className="p-3 rounded-full hover:bg-white/10 text-white transition-colors"><Icon name="close" className="w-6 h-6" /></button>
               </div>
-
-              {totalCards > 0 &&
-                  <div className="w-full h-2 bg-white/20 rounded-full my-2 overflow-hidden">
-                      <div className="h-full bg-[var(--accent-color)] rounded-full transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
-                  </div>
-              }
-              
-              <div className="w-full h-[55vh] max-h-[500px] relative">
-                  {renderContent()}
+              <div className="w-full h-1 bg-gray-800 rounded-full mb-8 overflow-hidden">
+                  <div className="h-full bg-[--accent-color] rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+              </div>
+              <div className="flex-1 flex flex-col justify-center min-h-0 relative">
+                  {isSessionComplete ? (
+                      <div className="glass-card bg-white/5 border-white/10 rounded-3xl p-12 flex flex-col items-center justify-center text-center max-w-lg mx-auto w-full">
+                          <div className="w-24 h-24 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mb-6">
+                              <Icon name="check" className="w-12 h-12" />
+                          </div>
+                          <h3 className="text-3xl font-bold text-white mb-2">Session Complete!</h3>
+                          <p className="text-gray-400 mb-8">You've reviewed all cards in this deck.</p>
+                          <div className="flex gap-4 w-full">
+                              <button onClick={() => startSession()} className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors">Study Again</button>
+                              <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-[--accent-color] hover:opacity-90 text-white font-semibold transition-opacity">Finish</button>
+                          </div>
+                      </div>
+                  ) : !currentCard ? (
+                       <div className="text-center text-gray-400">Empty Deck</div>
+                  ) : (
+                      <div className="relative w-full max-w-2xl mx-auto aspect-[4/3] sm:aspect-[16/10]">
+                          <div className="w-full h-full card-flip-container" onClick={() => setIsFlipped(!isFlipped)}>
+                              <div className={`card-flipper ${isFlipped ? 'is-flipped' : ''}`}>
+                                  <div className="card-face card-front">
+                                      <CardFaceContent content={currentCard.front} image={currentCard.front_image_url} label="Front" />
+                                  </div>
+                                  <div className="card-face card-back">
+                                      <CardFaceContent content={currentCard.back} image={currentCard.back_image_url} label="Back" />
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+              </div>
+              <div className="h-24 mt-8 flex items-center justify-center">
+                  {!isSessionComplete && currentCard && (
+                      <div className={`flex gap-6 transition-all duration-300 ${isFlipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+                          <button onClick={() => handleRate('again')} className="group flex flex-col items-center gap-2">
+                              <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-red-500/30 group-hover:border-red-500 group-hover:bg-red-500/10 flex items-center justify-center text-red-400 transition-all"><Icon name="refresh-ccw" className="w-6 h-6" /></div>
+                              <span className="text-xs font-medium text-gray-500 group-hover:text-red-400">Again (1)</span>
+                          </button>
+                          <button onClick={() => handleRate('good')} className="group flex flex-col items-center gap-2">
+                              <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-blue-500/30 group-hover:border-blue-500 group-hover:bg-blue-500/10 flex items-center justify-center text-blue-400 transition-all"><Icon name="check" className="w-6 h-6" /></div>
+                              <span className="text-xs font-medium text-gray-500 group-hover:text-blue-400">Good (2)</span>
+                          </button>
+                          <button onClick={() => handleRate('easy')} className="group flex flex-col items-center gap-2">
+                              <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-green-500/30 group-hover:border-green-500 group-hover:bg-green-500/10 flex items-center justify-center text-green-400 transition-all"><Icon name="chevrons-up-down" className="w-6 h-6" /></div>
+                              <span className="text-xs font-medium text-gray-500 group-hover:text-green-400">Easy (3)</span>
+                          </button>
+                      </div>
+                  )}
+                  {!isSessionComplete && currentCard && !isFlipped && (
+                      <div className="text-gray-500 text-sm animate-pulse">Press Space or Tap to Flip</div>
+                  )}
               </div>
             </div>
           </div>
         );
       };
+      
+      // --- Helper Components ---
+      const CuteButton = ({ children, className, onClick, type='button', disabled }) => (
+          <button type={type} onClick={onClick} disabled={disabled} className={`relative group overflow-hidden bg-gradient-to-br from-white/40 to-white/20 border border-white/40 shadow-lg text-[--text-color] font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed ${className || ''}`}>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <span className="relative flex items-center justify-center gap-2">{children}</span>
+          </button>
+      );
 
-      // --- From App.tsx ---
-      function App() {
+      const FormInput = ({ id, label, ...props}) => (
+          <div className="mb-5">
+              <label htmlFor={id} className="block text-sm font-semibold text-[--text-color-light] mb-1.5 ml-1">{label}</label>
+              <input id={id} {...props} className="w-full bg-white/10 border border-[--glass-border] rounded-xl px-4 py-2.5 text-[--text-color] placeholder-white/30 focus:ring-2 focus:ring-[--accent-color] focus:border-transparent focus:outline-none transition-all shadow-inner"/>
+          </div>
+      );
+
+      const AnimatedTitle = ({ text, className = '', animate = true }) => {
+          if (!animate) return <h1 className={className}>{text}</h1>;
+          return (
+            <h1 className={className}>
+              {text.split('').map((char, index) => (
+                <span key={index} className="title-char" style={{ animationDelay: `${index * 0.05}s` }}>{char}</span>
+              ))}
+            </h1>
+          );
+      };
+      
+      // 3. Memoized Components
+      const CardGridItem = memo(({ card, index, onEdit, onDelete, onDragStart, onDrop, onDragOver, onDragEnd, gridSize }) => (
+        <div 
+            className="group relative glass-card rounded-2xl overflow-hidden p-5 flex flex-col" 
+            draggable 
+            onDragStart={(e) => onDragStart(e, 'card', card.id)} 
+            onDrop={(e) => onDrop(e, 'card', card.id)} 
+            onDragOver={onDragOver} 
+            onDragEnd={onDragEnd}
+        >
+            <div className="absolute top-3 left-3 w-6 h-6 rounded-full bg-[--accent-color] text-white text-xs font-bold flex items-center justify-center shadow-md z-10">{index + 1}</div>
+            <div className="flex-1 mb-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[--text-color-light] opacity-60 mb-2 text-center">Front</p>
+                {card.front_image_url && <img src={getOptimizedImageUrl(card.front_image_url)} className="h-20 w-full object-contain rounded-md mb-2" loading="lazy" />}
+                <div className="prose prose-sm text-[--text-color] text-center line-clamp-3" dangerouslySetInnerHTML={renderMarkdown(card.front)}></div>
+            </div>
+            <div className="h-px bg-gradient-to-r from-transparent via-[--glass-border] to-transparent my-1"></div>
+            <div className="flex-1 mt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[--text-color-light] opacity-60 mb-2 text-center">Back</p>
+                <div className="prose prose-sm text-[--text-color-light] text-center line-clamp-3" dangerouslySetInnerHTML={renderMarkdown(card.back)}></div>
+            </div>
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onEdit(card)} className="p-1.5 bg-white/20 rounded-full hover:bg-white/50 hover:scale-110 transition-all shadow-sm"><Icon name="edit" className="w-4 h-4"/></button>
+                <button onClick={() => onDelete(card)} className="p-1.5 bg-white/20 rounded-full hover:bg-red-500/20 hover:text-red-500 hover:scale-110 transition-all shadow-sm"><Icon name="trash" className="w-4 h-4"/></button>
+            </div>
+        </div>
+      ));
+
+      const CardListItem = memo(({ card, index, density, onEdit, onDelete, onDragStart, onDrop, onDragOver, onDragEnd }) => (
+         <div 
+            className={`group relative glass-card rounded-2xl overflow-hidden ${density.padding} flex items-center gap-4`} 
+            draggable 
+            onDragStart={(e) => onDragStart(e, 'card', card.id)} 
+            onDrop={(e) => onDrop(e, 'card', card.id)} 
+            onDragOver={onDragOver} 
+            onDragEnd={onDragEnd}
+        >
+            <div className="flex items-center gap-3 text-[--text-color-light] flex-shrink-0 w-12">
+                <span className="font-bold text-sm w-5 text-right">{index + 1}</span>
+                <Icon name="grip-vertical" className="w-4 h-4 cursor-move opacity-50 group-hover:opacity-100" />
+            </div>
+            <div className="grid grid-cols-2 gap-6 flex-grow items-center">
+                <div className={`prose ${density.prose} text-[--text-color] line-clamp-2`} dangerouslySetInnerHTML={renderMarkdown(card.front)}></div>
+                <div className={`prose ${density.prose} text-[--text-color-light] line-clamp-2`} dangerouslySetInnerHTML={renderMarkdown(card.back)}></div>
+            </div>
+             <div className="absolute right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onEdit(card)} className="p-1.5 bg-white/20 rounded-full hover:bg-white/50 hover:scale-110 transition-all shadow-sm"><Icon name="edit" className="w-4 h-4"/></button>
+                <button onClick={() => onDelete(card)} className="p-1.5 bg-white/20 rounded-full hover:bg-red-500/20 hover:text-red-500 hover:scale-110 transition-all shadow-sm"><Icon name="trash" className="w-4 h-4"/></button>
+            </div>
+        </div>
+      ));
+
+      const EmptyState = ({ type, onAction }) => (
+          <div className="col-span-full flex flex-col items-center justify-center p-12 text-center glass-card rounded-3xl border-dashed border-2 border-[--glass-border] bg-transparent shadow-none">
+              <div className="w-24 h-24 bg-[--glass-bg] rounded-full flex items-center justify-center mb-6 shadow-inner">
+                  <Icon name={type === 'folders' ? 'folder' : type === 'decks' ? 'deck' : 'card'} className="w-10 h-10 text-[--text-color-light] opacity-50" />
+              </div>
+              <h3 className="text-xl font-bold text-[--text-color] mb-2">
+                  {type === 'folders' ? 'No folders yet' : type === 'decks' ? 'This folder is empty' : 'No cards in this deck'}
+              </h3>
+              <p className="text-[--text-color-light] max-w-xs mb-8">
+                  {type === 'folders' ? 'Create a folder to start organizing your flashcards.' : 
+                   type === 'decks' ? 'Add a deck to this folder to begin creating cards.' : 
+                   'Add cards manually or import them from a CSV file.'}
+              </p>
+              <CuteButton onClick={onAction} className="!bg-[--accent-color] !text-white border-none">
+                  <Icon name="plus" className="w-5 h-5 mr-2"/>
+                  Create {type === 'folders' ? 'Folder' : type === 'decks' ? 'Deck' : 'Card'}
+              </CuteButton>
+          </div>
+      );
+      
+      const AuthScreen = () => {
+          const [isSignUp, setIsSignUp] = useState(false);
+          const [email, setEmail] = useState('');
+          const [password, setPassword] = useState('');
+          const [isLoading, setIsLoading] = useState(false);
+          const { addToast } = useToast();
+
+          const handleAuth = async (e) => {
+              e.preventDefault();
+              
+              // Basic Validation
+              if (!email || !password) {
+                  addToast("Please enter both email and password.", "error");
+                  return;
+              }
+              if (password.length < 6) {
+                  addToast("Password must be at least 6 characters.", "error");
+                  return;
+              }
+
+              setIsLoading(true);
+
+              try {
+                  if (isSignUp) {
+                      const { data, error } = await supabase.auth.signUp({ email, password });
+                      if (error) throw error;
+                      
+                      // Check if email confirmation is required
+                      if (data?.user && !data.session) {
+                          addToast('Success! Please check your email to confirm your account.', 'success');
+                          setIsSignUp(false); // Switch back to login view
+                      } else {
+                          addToast('Account created! logging you in...', 'success');
+                      }
+                  } else {
+                      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                      if (error) throw error;
+                      addToast('Welcome back!', 'success');
+                  }
+              } catch (error) {
+                  addToast(error.message || "Authentication failed", 'error');
+                  // Clear password on failure for security/UX
+                  setPassword('');
+              } finally {
+                  setIsLoading(false);
+              }
+          };
+          
+           return (
+              <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[--accent-color] opacity-10 blur-[100px] -z-10 rounded-full transform scale-150 translate-x-1/3 translate-y-1/3"></div>
+                  <div className="w-full max-w-4xl glass-card rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl min-h-[600px]">
+                      <div className="flex-1 p-10 bg-gradient-to-br from-[--accent-color]/20 to-transparent flex flex-col justify-center relative text-[--text-color]">
+                          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                          <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-[--accent-color] rounded-2xl shadow-lg text-white"><Icon name="study" className="w-8 h-8" /></div>
+                                <h1 className="text-4xl font-bold tracking-tight">Guided</h1>
+                            </div>
+                            <h2 className="text-3xl font-bold mb-4 leading-tight">Master any subject, <br/>one card at a time.</h2>
+                            <p className="text-lg opacity-80 mb-8 leading-relaxed">Create beautiful flashcards, organize with ease, and study smarter with our spaced repetition system.</p>
+                            <div className="grid grid-cols-2 gap-4 text-sm font-medium opacity-90">
+                                <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Icon name="check" className="w-4 h-4"/></div>Smart Review</div>
+                                <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Icon name="check" className="w-4 h-4"/></div>Cloud Sync</div>
+                                <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Icon name="check" className="w-4 h-4"/></div>Markdown Support</div>
+                                <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Icon name="check" className="w-4 h-4"/></div>Themes</div>
+                            </div>
+                          </div>
+                      </div>
+                      <div className="flex-1 p-10 flex flex-col justify-center bg-white/5">
+                          <h3 className="text-2xl font-bold text-[--text-color] mb-2">{isSignUp ? 'Create Account' : 'Welcome Back'}</h3>
+                          <p className="text-[--text-color-light] mb-8">Please enter your details to continue.</p>
+                          <form onSubmit={handleAuth} className="space-y-4">
+                              <FormInput id="email" label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+                              <FormInput id="password" label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+                              
+                              <CuteButton type="submit" disabled={isLoading} className="w-full py-3.5 mt-4 !bg-[--accent-color]/90 !text-white hover:!bg-[--accent-color] border-transparent">
+                                  {isLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
+                              </CuteButton>
+                          </form>
+                          <div className="mt-6 text-center text-sm text-[--text-color-light]">
+                              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                              <button onClick={() => { setIsSignUp(!isSignUp); setEmail(''); setPassword(''); }} className="font-bold text-[--accent-color] hover:underline ml-1 transition-colors">
+                                  {isSignUp ? 'Sign In' : 'Sign Up'}
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          );
+      };
+      
+      const SettingsContent = ({ activeTheme, setActiveTheme, applyTheme, customThemes, onThemeSave, onThemeDelete }) => {
+          // ... (same as before)
+          const presets = [
+              { id: 'light', name: 'Light', preview: 'linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)' },
+              { id: 'dark', name: 'Dark', preview: '#0f172a' },
+              { id: 'kirby', name: 'Kirby', preview: 'linear-gradient(120deg, #fbc2eb 0%, #a6c1ee 100%)' },
+              { id: 'forest', name: 'Forest', preview: 'linear-gradient(120deg, #134e5e 0%, #71b280 100%)' }
+          ];
+          const defaultCustom = {
+              name: 'New Theme',
+              colors: {
+                  bgGradientStart: '#ffffff', bgGradientEnd: '#e5e7eb', 
+                  textColor: '#1f2937', textColorLight: '#6b7280',
+                  glassBg: 'rgba(255, 255, 255, 0.65)', glassBorder: 'rgba(255, 255, 255, 0.5)',
+                  shadowColor: 'rgba(0, 0, 0, 0.05)', accentColor: '#8b5cf6'
+              },
+              isAnimated: false,
+              animationDuration: '15s'
+          };
+          const [editingTheme, setEditingTheme] = useState(null);
+          useEffect(() => { if (editingTheme) applyTheme(editingTheme); }, [editingTheme, applyTheme]);
+          const handleCancel = () => { setEditingTheme(null); applyTheme(activeTheme); };
+          const handleSave = () => { if (editingTheme) { onThemeSave(editingTheme); setEditingTheme(null); } };
+          const handleColorChange = (key, value) => { setEditingTheme(prev => ({ ...prev, colors: { ...prev.colors, [key]: value } })); };
+          const ColorPicker = ({ label, value, onChange }) => (
+              <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-[--text-color-light]">{label}</label>
+                  <div className="flex items-center gap-2">
+                      <input type="color" value={value.startsWith('#') ? value : '#000000'} onChange={(e) => onChange(e.target.value)} className="h-8 w-12 bg-transparent border border-[--glass-border] rounded cursor-pointer" />
+                      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 bg-white/10 border border-[--glass-border] rounded px-2 py-1 text-xs font-mono text-[--text-color]" />
+                  </div>
+              </div>
+          );
+
+          if (editingTheme) {
+               return (
+                  <div className="space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                          <button onClick={handleCancel} className="text-sm text-[--text-color-light] hover:text-[--text-color] flex items-center gap-1"><Icon name="chevron-down" className="w-4 h-4 rotate-90" /> Back</button>
+                          <h3 className="font-bold text-[--text-color]">{editingTheme.id ? 'Edit Theme' : 'New Theme'}</h3>
+                      </div>
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                          <div className="mb-4"><label className="block text-sm font-semibold text-[--text-color-light] mb-1">Theme Name</label><input type="text" value={editingTheme.name} onChange={(e) => setEditingTheme({...editingTheme, name: e.target.value})} className="w-full bg-white/10 border border-[--glass-border] rounded-xl px-3 py-2 text-[--text-color] focus:outline-none focus:ring-2 focus:ring-[--accent-color]" /></div>
+                          <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-[--glass-border]">
+                              <h4 className="text-sm font-bold text-[--text-color] mb-2">Background</h4>
+                              <div className="grid grid-cols-2 gap-3"><ColorPicker label="Start Color" value={editingTheme.colors.bgGradientStart} onChange={(v) => handleColorChange('bgGradientStart', v)} /><ColorPicker label="End Color" value={editingTheme.colors.bgGradientEnd} onChange={(v) => handleColorChange('bgGradientEnd', v)} /></div>
+                              <div className="flex items-center gap-2 mt-2"><input type="checkbox" id="anim" checked={editingTheme.isAnimated} onChange={(e) => setEditingTheme({...editingTheme, isAnimated: e.target.checked})} className="rounded border-[--glass-border] bg-white/10 text-[--accent-color] focus:ring-[--accent-color]" /><label htmlFor="anim" className="text-sm text-[--text-color]">Animated Background</label></div>
+                          </div>
+                          <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-[--glass-border]">
+                              <h4 className="text-sm font-bold text-[--text-color] mb-2">UI Colors</h4>
+                              <ColorPicker label="Accent" value={editingTheme.colors.accentColor} onChange={(v) => handleColorChange('accentColor', v)} />
+                              <div className="grid grid-cols-2 gap-3"><ColorPicker label="Text Main" value={editingTheme.colors.textColor} onChange={(v) => handleColorChange('textColor', v)} /><ColorPicker label="Text Light" value={editingTheme.colors.textColorLight} onChange={(v) => handleColorChange('textColorLight', v)} /></div>
+                          </div>
+                          <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-[--glass-border]">
+                              <h4 className="text-sm font-bold text-[--text-color] mb-2">Glass Effect</h4>
+                              <ColorPicker label="Card BG (RGBA)" value={editingTheme.colors.glassBg} onChange={(v) => handleColorChange('glassBg', v)} /><ColorPicker label="Border (RGBA)" value={editingTheme.colors.glassBorder} onChange={(v) => handleColorChange('glassBorder', v)} />
+                          </div>
+                      </div>
+                      <div className="flex gap-3 pt-2 border-t border-[--glass-border]">
+                          {editingTheme.id && (<button onClick={() => { onThemeDelete(editingTheme.id); setEditingTheme(null); }} className="px-4 py-2 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors text-sm font-semibold">Delete</button>)}
+                          <div className="flex-1"></div>
+                          <button onClick={handleCancel} className="px-4 py-2 rounded-xl hover:bg-white/10 text-[--text-color] transition-colors text-sm font-semibold">Cancel</button>
+                          <button onClick={handleSave} className="px-6 py-2 rounded-xl bg-[--accent-color] text-white hover:opacity-90 transition-opacity text-sm font-semibold shadow-lg">Save Theme</button>
+                      </div>
+                  </div>
+              );
+          }
+          return (
+              <div className="space-y-6">
+                  <div>
+                      <h3 className="text-sm font-bold text-[--text-color-light] uppercase tracking-wider mb-3">Presets</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                          {presets.map(t => (
+                              <button key={t.id} onClick={() => { applyTheme(t.id); setActiveTheme(t.id); }} className={`relative p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 group ${activeTheme === t.id ? 'border-[--accent-color] bg-[--accent-color]/5' : 'border-[--glass-border] hover:border-[--text-color-light]'}`}>
+                                  <div className="w-10 h-10 rounded-full shadow-sm border border-white/20" style={{ background: t.preview }}></div>
+                                  <span className="font-semibold text-[--text-color]">{t.name}</span>
+                                  {activeTheme === t.id && <Icon name="check" className="w-5 h-5 text-[--accent-color] ml-auto" />}
+                              </button>
+                          ))}
+                      </div>
+                  </div>
+                  <div>
+                      <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-bold text-[--text-color-light] uppercase tracking-wider">Custom Themes</h3>
+                          <button onClick={() => setEditingTheme({ ...defaultCustom, id: `custom-${Date.now()}` })} className="text-xs font-bold text-[--accent-color] hover:underline flex items-center gap-1"><Icon name="plus" className="w-3 h-3" /> Create New</button>
+                      </div>
+                      {customThemes.length === 0 ? (<div className="text-center p-6 rounded-xl border border-dashed border-[--glass-border] text-[--text-color-light] text-sm">No custom themes yet.</div>) : (
+                          <div className="grid grid-cols-2 gap-3">
+                              {customThemes.map(t => (
+                                  <div key={t.id} className={`relative p-3 rounded-xl border-2 transition-all text-left group ${activeTheme.id === t.id ? 'border-[--accent-color] bg-[--accent-color]/5' : 'border-[--glass-border]'}`}>
+                                      <button onClick={() => { applyTheme(t); setActiveTheme(t); }} className="flex items-center gap-3 w-full">
+                                          <div className="w-10 h-10 rounded-full shadow-sm border border-white/20" style={{ background: `linear-gradient(135deg, ${t.colors.bgGradientStart}, ${t.colors.bgGradientEnd})` }}></div>
+                                          <span className="font-semibold text-[--text-color] truncate">{t.name}</span>
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setEditingTheme(t); }} className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-[--text-color] opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="edit" className="w-3 h-3" /></button>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                  </div>
+              </div>
+          );
+      };
+
+      // --- Main Logic Component ---
+      function FlashcardApp() {
         const [session, setSession] = useState(null);
+        
+        // 2. Flattened State for Lazy Loading
         const [folders, setFolders] = useState([]);
+        const [decks, setDecks] = useState([]);
+        const [cards, setCards] = useState([]);
+        
         const [view, setView] = useState('folders');
         const [activeFolder, setActiveFolder] = useState(null);
         const [activeDeck, setActiveDeck] = useState(null);
@@ -616,28 +876,29 @@
         const [customThemes, setCustomThemes] = useState([]);
         const [searchTerm, setSearchTerm] = useState('');
         const [sortOption, setSortOption] = useState('custom');
+        
         const [loading, setLoading] = useState(true);
         const [isFirstLoad, setIsFirstLoad] = useState(false);
 
+        // View preferences
         const [cardViewMode, setCardViewMode] = useState('grid');
         const [cardGridSizeIndex, setCardGridSizeIndex] = useState(2);
         const [cardListDensityIndex, setCardListDensityIndex] = useState(1);
 
         const [modal, setModal] = useState({ type: null, data: undefined });
         const [studyModalOpen, setStudyModalOpen] = useState(false);
-        
         const [draggedItem, setDraggedItem] = useState(null);
 
-        const GRID_SIZE_STEPS = [140, 180, 240, 300, 360];
-        const DEFAULT_GRID_SIZE_INDEX = 2;
+        const { addToast } = useToast();
 
+        const GRID_SIZE_STEPS = [140, 180, 240, 300, 360];
         const LIST_DENSITY_OPTIONS = [
             { name: 'Spacious', padding: 'p-6', prose: 'prose-base' },
             { name: 'Comfortable', padding: 'p-4', prose: '' },
             { name: 'Compact', padding: 'p-2', prose: 'prose-sm' }
         ];
-        const DEFAULT_LIST_DENSITY_INDEX = 1;
-        
+
+        // --- Effects ---
         useEffect(() => {
           const hasAnimatedBefore = sessionStorage.getItem('guided-title-animated');
           if (!hasAnimatedBefore) {
@@ -645,65 +906,118 @@
               sessionStorage.setItem('guided-title-animated', 'true');
           }
 
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setLoading(false);
-          });
+          // Robust Session Initialization
+          const initSession = async () => {
+              try {
+                  // 1. Get initial session
+                  const { data: { session: initialSession } } = await supabase.auth.getSession();
+                  setSession(initialSession);
+              } catch (err) {
+                  console.error("Session check failed", err);
+              } finally {
+                  // 2. Only stop loading after we've checked
+                  setLoading(false);
+              }
+          };
 
+          initSession();
+
+          // 3. Listen for changes (sign in, sign out, refresh)
           const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
+            // Ensure loading is off if auth state changes (e.g. immediate login)
+            setLoading(false); 
           });
 
           return () => subscription.unsubscribe();
         }, []);
 
-        const fetchData = useCallback(async () => {
+        useEffect(() => {
+            if (window.marked) window.marked.setOptions({ gfm: true, breaks: true });
+        }, []);
+        
+        // FIX 1: Persist Active Theme (Missing in previous version)
+        useEffect(() => {
+            if (activeTheme) {
+                localStorage.setItem('flashcard-active-theme-id', typeof activeTheme === 'string' ? activeTheme : activeTheme.id);
+            }
+        }, [activeTheme]);
+
+        // 1. Lazy Data Fetching Implementation
+        // Fetch Folders (Initial)
+        const fetchFolders = useCallback(async () => {
           if (!session) return;
           setLoading(true);
-          const { data, error } = await supabase
-            .from('folders')
-            .select('*, decks(*, cards(*))')
-            .eq('user_id', session.user.id)
-            .order('order', { ascending: true })
-            .order('order', { foreignTable: 'decks', ascending: true })
-            .order('order', { foreignTable: 'decks.cards', ascending: true });
-
-          if (error) {
-            console.error('Error fetching data:', error);
-            alert('Could not fetch your data. Please try again.');
-          } else {
-            setFolders(data || []);
-          }
+          const { data, error } = await supabase.from('folders').select('*').eq('user_id', session.user.id).order('order');
+          if (error) addToast('Could not load folders.', 'error');
+          else setFolders(data || []);
           setLoading(false);
-        }, [session]);
+        }, [session, addToast]);
 
-        useEffect(() => {
-          if (window.marked) {
-              window.marked.setOptions({
-                  gfm: true,
-                  breaks: true,
-              });
-          }
-        }, []);
+        // Fetch Decks (On Demand)
+        const fetchDecks = useCallback(async (folderId) => {
+            setLoading(true);
+            const { data, error } = await supabase.from('decks').select('*').eq('folder_id', folderId).order('order');
+            if (error) addToast('Could not load decks.', 'error');
+            else setDecks(data || []);
+            setLoading(false);
+        }, [addToast]);
 
+        // Fetch Cards (On Demand)
+        const fetchCards = useCallback(async (deckId) => {
+            setLoading(true);
+            const { data, error } = await supabase.from('cards').select('*').eq('deck_id', deckId).order('order');
+            if (error) addToast('Could not load cards.', 'error');
+            else setCards(data || []);
+            setLoading(false);
+        }, [addToast]);
+
+        // Initial Load
         useEffect(() => {
-          if (session) {
-            fetchData();
-          } else {
-            setFolders([]);
-          }
-        }, [session, fetchData]);
+          if (session) fetchFolders();
+          else setFolders([]);
+        }, [session, fetchFolders]);
         
-        // --- MODIFIED SECTION ---
-        
+        // Navigation Handlers
+        const navigateToFolder = (folder) => {
+            setActiveFolder(folder);
+            setView('decks');
+            fetchDecks(folder.id);
+            setSearchTerm('');
+        };
+
+        const navigateToDeck = (deck) => {
+            setActiveDeck(deck);
+            setView('cards');
+            fetchCards(deck.id);
+            setSearchTerm('');
+        };
+
+        const navigateBackToFolders = () => {
+            setView('folders');
+            setActiveFolder(null);
+            setActiveDeck(null);
+            setDecks([]); // Clear memory
+            setCards([]); // Clear memory
+            setSearchTerm('');
+        };
+
+        const navigateBackToDecks = () => {
+            setView('decks');
+            setActiveDeck(null);
+            setCards([]); // Clear memory
+            setSearchTerm('');
+            // Refetch decks to ensure count is up to date if coming back
+            if(activeFolder) fetchDecks(activeFolder.id); 
+        };
+
+        // Theme Logic
         const applyTheme = useCallback((theme) => {
           if (typeof theme === 'string') {
-              // This is a preset theme (e.g., 'light', 'dark')
               document.documentElement.removeAttribute('style');
               document.documentElement.setAttribute('data-theme', theme);
               document.documentElement.style.setProperty('--bg-animation', 'none');
           } else {
-              // This is a custom theme object
               document.documentElement.removeAttribute('data-theme');
               const root = document.documentElement;
               const { colors, isAnimated, animationDuration } = theme;
@@ -716,108 +1030,103 @@
               root.style.setProperty('--shadow-color', colors.shadowColor);
               root.style.setProperty('--accent-color', colors.accentColor);
               
-              if (isAnimated) {
-                  root.style.setProperty('--bg-animation', `animateBg ${animationDuration || '15s'} ease infinite`);
-              } else {
-                  root.style.setProperty('--bg-animation', 'none');
-              }
+              if (isAnimated) root.style.setProperty('--bg-animation', `animateBg ${animationDuration || '15s'} ease infinite`);
+              else root.style.setProperty('--bg-animation', 'none');
           }
         }, []);
-        
-        const presetThemes = [
-            { id: 'light', name: 'Default Light', class: 'bg-gradient-to-br from-gray-100 to-gray-200' },
-            { id: 'dark', name: 'OLED Dark', class: 'bg-black' },
-            { id: 'kirby', name: 'Kirby', class: 'bg-gradient-to-br from-pink-300 to-sky-400' },
-            { id: 'forest', name: 'Forest', class: 'bg-gradient-to-br from-green-700 to-green-900' }
-        ];
 
-        // This useEffect was MODIFIED
+        // ... Theme Effects & Handlers (Same as before) ...
         useEffect(() => {
-          const savedCustomThemes = localStorage.getItem('flashcard-custom-themes');
-          const loadedCustomThemes = savedCustomThemes ? JSON.parse(savedCustomThemes) : [];
-          if (savedCustomThemes) setCustomThemes(loadedCustomThemes);
+            const savedCustomThemes = localStorage.getItem('flashcard-custom-themes');
+            const loadedCustomThemes = savedCustomThemes ? JSON.parse(savedCustomThemes) : [];
+            if (savedCustomThemes) setCustomThemes(loadedCustomThemes);
 
-          const savedThemeId = localStorage.getItem('flashcard-active-theme-id') || 'light';
-          const customTheme = loadedCustomThemes.find(t => t.id === savedThemeId);
-
-          let themeToApply; 
-          if (customTheme) {
-            themeToApply = customTheme;
-            setActiveTheme(customTheme);
-          } else {
-            themeToApply = (presetThemes.find(t => t.id === savedThemeId)?.id || 'light');
+            const savedThemeId = localStorage.getItem('flashcard-active-theme-id') || 'light';
+            const customTheme = loadedCustomThemes.find(t => t.id === savedThemeId);
+            const themeToApply = customTheme || savedThemeId;
+            
             setActiveTheme(themeToApply);
-          }
-          applyTheme(themeToApply); // Call applyTheme
-          
-          const savedViewMode = localStorage.getItem('flashcard-view-mode');
-          if(savedViewMode) setCardViewMode(savedViewMode);
+            applyTheme(themeToApply);
+            
+            const savedViewMode = localStorage.getItem('flashcard-view-mode');
+            if(savedViewMode) setCardViewMode(savedViewMode);
+            const savedGridIndex = localStorage.getItem('flashcard-grid-size-index');
+            if (savedGridIndex) setCardGridSizeIndex(parseInt(savedGridIndex, 10));
+            const savedListDensityIndex = localStorage.getItem('flashcard-list-density-index');
+            if (savedListDensityIndex) setCardListDensityIndex(parseInt(savedListDensityIndex, 10));
+        }, [applyTheme]);
 
-          const savedGridIndex = localStorage.getItem('flashcard-grid-size-index');
-          if (savedGridIndex) setCardGridSizeIndex(parseInt(savedGridIndex, 10));
-
-          const savedListDensityIndex = localStorage.getItem('flashcard-list-density-index');
-          if (savedListDensityIndex) setCardListDensityIndex(parseInt(savedListDensityIndex, 10));
-
-        }, [applyTheme]); // Added dependency
-
-        // This useEffect was MODIFIED
-        useEffect(() => {
-          if (activeTheme) { // Check if activeTheme is set
-            applyTheme(activeTheme);
-            localStorage.setItem('flashcard-active-theme-id', typeof activeTheme === 'string' ? activeTheme : activeTheme.id);
-          }
-        }, [activeTheme, applyTheme]); // Added dependency
-
-        // --- END MODIFIED SECTION ---
-
-        useEffect(() => {
-            localStorage.setItem('flashcard-view-mode', cardViewMode);
-        }, [cardViewMode]);
-
-        useEffect(() => {
-            localStorage.setItem('flashcard-grid-size-index', String(cardGridSizeIndex));
-        }, [cardGridSizeIndex]);
-
-        useEffect(() => {
-            localStorage.setItem('flashcard-list-density-index', String(cardListDensityIndex));
-        }, [cardListDensityIndex]);
-
-        const navigateTo = (newView, data) => {
-          setSearchTerm('');
-          setSortOption('custom');
-          if (newView === 'folders') {
-            setActiveFolder(null);
-            setActiveDeck(null);
-          } else if (newView === 'decks' && data) {
-            setActiveFolder(data);
-            setActiveDeck(null);
-          } else if (newView === 'cards' && data) {
-            setActiveDeck(data);
-          }
-          setView(newView);
+        const handleCustomThemeSave = (theme) => {
+            const existingIndex = customThemes.findIndex(t => t.id === theme.id);
+            let updatedThemes;
+            if (existingIndex > -1) updatedThemes = customThemes.map(t => t.id === theme.id ? theme : t);
+            else updatedThemes = [...customThemes, theme];
+            setCustomThemes(updatedThemes);
+            localStorage.setItem('flashcard-custom-themes', JSON.stringify(updatedThemes));
+            setActiveTheme(theme);
+            applyTheme(theme);
+            addToast('Theme saved!', 'success');
         };
-        
+
+        const handleCustomThemeDelete = (themeId) => {
+            const updatedThemes = customThemes.filter(t => t.id !== themeId);
+            setCustomThemes(updatedThemes);
+            localStorage.setItem('flashcard-custom-themes', JSON.stringify(updatedThemes));
+            if (typeof activeTheme !== 'string' && activeTheme.id === themeId) {
+                setActiveTheme('light');
+                applyTheme('light');
+            }
+            addToast('Theme deleted.', 'success');
+        };
+
+        // --- Auth Handlers ---
+        const handleSignOut = async () => {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                addToast('Signed out successfully', 'success');
+            } catch (error) {
+                console.error('Sign out error:', error);
+                // Even if api fails, we want to clear local state so user isn't stuck
+                addToast('Signed out (local session cleared)', 'info');
+            } finally {
+                // FIX 2: Always clear session state to ensure user can log in again
+                setSession(null);
+                setFolders([]);
+                setDecks([]);
+                setCards([]);
+                setActiveFolder(null);
+                setActiveDeck(null);
+            }
+        };
+
+        // --- CRUD Actions (Updated for flat state) ---
         const handleAddEditFolder = async (name) => {
             if (!session) return;
             if(modal.type === 'addFolder') {
                 const { data, error } = await supabase.from('folders').insert({ name, user_id: session.user.id, order: folders.length }).select().single();
-                if (error) return alert(error.message);
-                setFolders([...folders, { ...data, decks: []}]);
+                if (error) return addToast(error.message, 'error');
+                setFolders(prev => [...prev, data]);
+                addToast('Folder created!', 'success');
             } else if (modal.type === 'editFolder' && modal.data) {
                 const { data, error } = await supabase.from('folders').update({ name }).eq('id', modal.data.id).select().single();
-                if (error) return alert(error.message);
-                setFolders(folders.map(f => f.id === modal.data.id ? {...f, name: data.name} : f));
+                if (error) return addToast(error.message, 'error');
+                setFolders(prev => prev.map(f => f.id === modal.data.id ? {...f, name: data.name} : f));
+                // FIX 3: Sync active folder name if currently viewing it
+                if (activeFolder?.id === modal.data.id) setActiveFolder({ ...activeFolder, name: data.name });
+                addToast('Folder updated.', 'success');
             }
             setModal({ type: null });
         };
 
         const handleDeleteFolder = async (folderId) => {
-            setFolders(folders.filter(f => f.id !== folderId)); // Optimistic update
+            setFolders(prev => prev.filter(f => f.id !== folderId));
             const { error } = await supabase.from('folders').delete().eq('id', folderId);
             if (error) {
-                alert(error.message);
-                fetchData(); // Revert on error
+                addToast(error.message, 'error');
+                fetchFolders(); // Revert on error
+            } else {
+                addToast('Folder deleted.', 'success');
             }
             setModal({ type: null });
         };
@@ -825,221 +1134,140 @@
         const handleAddEditDeck = async (name) => {
           if (!activeFolder || !session) return;
           if (modal.type === 'addDeck') {
-              const { data, error } = await supabase.from('decks').insert({ name, folder_id: activeFolder.id, user_id: session.user.id, order: activeFolder.decks.length }).select().single();
-              if (error) return alert(error.message);
-              const newDeck = { ...data, cards: [] };
-              const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: [...f.decks, newDeck] } : f);
-              setFolders(updatedFolders);
-              setActiveFolder(updatedFolders.find(f => f.id === activeFolder.id) || null);
+              const { data, error } = await supabase.from('decks').insert({ name, folder_id: activeFolder.id, user_id: session.user.id, order: decks.length }).select().single();
+              if (error) return addToast(error.message, 'error');
+              setDecks(prev => [...prev, data]);
+              addToast('Deck created!', 'success');
           } else if (modal.type === 'editDeck' && modal.data) {
               const { data, error } = await supabase.from('decks').update({ name }).eq('id', modal.data.id).select().single();
-              if (error) return alert(error.message);
-              const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: f.decks.map(d => d.id === modal.data.id ? { ...d, name: data.name } : d) } : f);
-              setFolders(updatedFolders);
-              setActiveFolder(updatedFolders.find(f => f.id === activeFolder.id) || null);
+              if (error) return addToast(error.message, 'error');
+              setDecks(prev => prev.map(d => d.id === modal.data.id ? {...d, name: data.name} : d));
+              // FIX 4: Sync active deck name if currently viewing it
+              if (activeDeck?.id === modal.data.id) setActiveDeck({ ...activeDeck, name: data.name });
+              addToast('Deck updated.', 'success');
           }
           setModal({ type: null });
         };
 
         const handleDeleteDeck = async (deckId) => {
-            if (!activeFolder) return;
-            const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: f.decks.filter(d => d.id !== deckId) } : f);
-            setFolders(updatedFolders); // Optimistic update
-            setActiveFolder(updatedFolders.find(f => f.id === activeFolder.id) || null);
-            
+            setDecks(prev => prev.filter(d => d.id !== deckId));
             const { error } = await supabase.from('decks').delete().eq('id', deckId);
             if (error) {
-                alert(error.message);
-                fetchData(); // Revert on error
+                addToast(error.message, 'error');
+                if(activeFolder) fetchDecks(activeFolder.id);
+            } else {
+                addToast('Deck deleted.', 'success');
             }
             setModal({ type: null });
         };
 
         const uploadCardImage = async (file, cardId, side) => {
             if (!session) throw new Error("Not authenticated");
-            const filePath = `${session.user.id}/${cardId}/${side}-${Date.now()}`;
-            const { error: uploadError } = await supabase.storage.from('card-images').upload(filePath, file);
-            if (uploadError) throw uploadError;
+            // 1. Force check session
+            const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !currentSession) throw new Error("Session expired. Please sign out and log in again.");
 
+            // 2. Use ID from verified session
+            const filePath = `${currentSession.user.id}/${cardId}/${side}-${Date.now()}`;
+            const { error: uploadError } = await supabase.storage.from('card-images').upload(filePath, file, { cacheControl: '3600', upsert: false });
+            
+            if (uploadError) {
+                if (uploadError.message.includes('Auth session missing')) throw new Error("Upload failed: Auth session missing. Refresh page.");
+                throw uploadError;
+            }
             const { data: { publicUrl } } = supabase.storage.from('card-images').getPublicUrl(filePath);
             return publicUrl;
         };
 
         const handleAddEditCard = async (front, back, frontImageFile, backImageFile, existingCard) => {
-          if (!activeFolder || !activeDeck || !session) return;
+          if (!activeDeck || !session) return;
           
           let front_image_url = existingCard?.front_image_url;
           let back_image_url = existingCard?.back_image_url;
           const cardId = existingCard?.id || `card-id-placeholder-${Date.now()}`;
 
-          if (frontImageFile) front_image_url = await uploadCardImage(frontImageFile, cardId, 'front');
-          if (backImageFile) back_image_url = await uploadCardImage(backImageFile, cardId, 'back');
+          try {
+            if (frontImageFile) front_image_url = await uploadCardImage(frontImageFile, cardId, 'front');
+            if (backImageFile) back_image_url = await uploadCardImage(backImageFile, cardId, 'back');
 
-          if (modal.type === 'addCard') {
-            const { data, error } = await supabase.from('cards').insert({ 
-              front, back, front_image_url, back_image_url, 
-              deck_id: activeDeck.id, user_id: session.user.id, order: activeDeck.cards.length 
-            }).select().single();
-            if (error) return alert(error.message);
-
-            const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: f.decks.map(d => d.id === activeDeck.id ? { ...d, cards: [...d.cards, data] } : d) } : f);
-            setFolders(updatedFolders);
-          } else if (modal.type === 'editCard' && existingCard) {
-            const { data, error } = await supabase.from('cards').update({ front, back, front_image_url, back_image_url }).eq('id', existingCard.id).select().single();
-            if (error) return alert(error.message);
-
-            const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: f.decks.map(d => d.id === activeDeck.id ? { ...d, cards: d.cards.map(c => c.id === data.id ? data : c) } : d) } : f);
-            setFolders(updatedFolders);
+            if (modal.type === 'addCard') {
+              const { data, error } = await supabase.from('cards').insert({ 
+                front, back, front_image_url, back_image_url, 
+                deck_id: activeDeck.id, user_id: session.user.id, order: cards.length 
+              }).select().single();
+              if (error) throw error;
+              setCards(prev => [...prev, data]);
+              addToast('Card added', 'success');
+            } else if (modal.type === 'editCard' && existingCard) {
+              const { data, error } = await supabase.from('cards').update({ front, back, front_image_url, back_image_url }).eq('id', existingCard.id).select().single();
+              if (error) throw error;
+              setCards(prev => prev.map(c => c.id === data.id ? data : c));
+              addToast('Card saved', 'success');
+            }
+            setModal({ type: null });
+          } catch (error) {
+            addToast(error.message, 'error');
           }
-          
-          const newActiveFolder = folders.find(f => f.id === activeFolder.id) || null;
-          setActiveFolder(newActiveFolder);
-          setActiveDeck(newActiveFolder?.decks.find(d => d.id === activeDeck.id) || null);
-          fetchData(); // refetch to get latest state
-          setModal({ type: null });
         };
         
         const handleDeleteCard = async (cardId) => {
-          if (!activeFolder || !activeDeck) return;
-          const updatedCards = activeDeck.cards.filter(c => c.id !== cardId);
-          const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: f.decks.map(d => d.id === activeDeck.id ? { ...d, cards: updatedCards } : d) } : f);
-          setFolders(updatedFolders); // Optimistic
-
+          setCards(prev => prev.filter(c => c.id !== cardId));
           const { error } = await supabase.from('cards').delete().eq('id', cardId);
           if (error) {
-              alert(error.message);
-              fetchData(); // Revert
+              addToast(error.message, 'error');
+              if(activeDeck) fetchCards(activeDeck.id);
+          } else {
+            addToast('Card deleted', 'success');
           }
-
-          const newActiveFolder = updatedFolders.find(f => f.id === activeFolder.id) || null;
-          setActiveFolder(newActiveFolder);
-          setActiveDeck(newActiveFolder?.decks.find(d => d.id === activeDeck.id) || null);
           setModal({ type: null });
         };
         
         const handleBulkAddCards = async (newCards, replace) => {
-          if (!activeFolder || !activeDeck || !session) return;
-
+          if (!activeDeck || !session) return;
           if (replace) {
-            const { error: deleteError } = await supabase.from('cards').delete().eq('deck_id', activeDeck.id);
-            if (deleteError) {
-              alert(`Failed to delete old cards: ${deleteError.message}`);
-              fetchData(); // Revert UI
-              return;
-            }
+            const { error } = await supabase.from('cards').delete().eq('deck_id', activeDeck.id);
+            if (error) return addToast('Failed to clear deck.', 'error');
           }
 
-          const currentCards = (replace ? [] : activeDeck.cards) || [];
+          const currentCards = (replace ? [] : cards) || [];
           const cardsToInsert = newCards.map((card, index) => ({
-            front: card.front,
-            back: card.back,
-            deck_id: activeDeck.id,
-            user_id: session.user.id,
-            order: currentCards.length + index,
+            front: card.front, back: card.back, deck_id: activeDeck.id, user_id: session.user.id, order: currentCards.length + index,
           }));
           
-          if (cardsToInsert.length === 0) {
-              setModal({ type: null });
-              return;
-          }
+          if (cardsToInsert.length === 0) { setModal({ type: null }); return; }
 
           const { data: insertedCards, error: insertError } = await supabase.from('cards').insert(cardsToInsert).select();
-
           if (insertError) {
-            alert(`Failed to import cards: ${insertError.message}`);
-            fetchData(); // Revert
-          } else if (insertedCards) {
-            const allNewCards = [...currentCards, ...insertedCards];
-            const updatedFolders = folders.map(f => f.id === activeFolder.id 
-                ? { ...f, decks: f.decks.map(d => d.id === activeDeck.id ? { ...d, cards: allNewCards } : d) } 
-                : f
-            );
-            setFolders(updatedFolders);
-            const newActiveFolder = updatedFolders.find(f => f.id === activeFolder.id) || null;
-            setActiveFolder(newActiveFolder);
-            setActiveDeck(newActiveFolder?.decks.find(d => d.id === activeDeck.id) || null);
+            addToast('Failed to import cards.', 'error');
+          } else {
+            addToast(`Imported ${insertedCards.length} cards!`, 'success');
+            if(activeDeck) fetchCards(activeDeck.id); // Refresh
           }
           setModal({ type: null });
         };
 
-        const handleExportDeck = () => {
-          if (!activeDeck) return;
-
-          const escapeCsvField = (field) => `"${String(field || '').replace(/"/g, '""')}"`;
-          
-          const csvContent = activeDeck.cards
-            .sort((a, b) => a.order - b.order)
-            .map(c => [escapeCsvField(c.front), escapeCsvField(c.back)].join(','))
-            .join('\n');
-          
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a");
-          const url = URL.createObjectURL(blob);
-          link.setAttribute("href", url);
-          link.setAttribute("download", `${activeDeck.name}.csv`);
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
-
-        const handleCustomThemeSave = (theme) => {
-          const existingIndex = customThemes.findIndex(t => t.id === theme.id);
-          let updatedThemes;
-          if (existingIndex > -1) updatedThemes = customThemes.map(t => t.id === theme.id ? theme : t);
-          else updatedThemes = [...customThemes, theme];
-          setCustomThemes(updatedThemes);
-          localStorage.setItem('flashcard-custom-themes', JSON.stringify(updatedThemes));
-          setActiveTheme(theme);
-        };
-        
-        const handleCustomThemeDelete = (themeId) => {
-            const updatedThemes = customThemes.filter(t => t.id !== themeId);
-            setCustomThemes(updatedThemes);
-            localStorage.setItem('flashcard-custom-themes', JSON.stringify(updatedThemes));
-            if (typeof activeTheme !== 'string' && activeTheme.id === themeId) {
-                setActiveTheme('light');
-            }
-        };
-
-        const getSortFunction = (option) => {
-          switch(option) {
-              case 'name_asc': return (a, b) => a.name.localeCompare(b.name);
-              case 'name_desc': return (a, b) => b.name.localeCompare(a.name);
-              case 'date_asc': return (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-              case 'date_desc': return (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-              case 'custom':
-              default: return (a, b) => a.order - b.order;
-          }
-        };
-
-        const handleDragStart = (e, type, id) => {
+        const handleDragStart = useCallback((e, type, id) => {
             setDraggedItem({ type, id });
             e.dataTransfer.setData(`application/${type}-id`, id);
             e.currentTarget.classList.add('dragging');
-        };
+        }, []);
+
+        const handleDragOver = useCallback((e) => e.preventDefault(), []);
         
-        const handleDragOver = (e) => e.preventDefault();
-        
-        const handleDrop = async (e, type, dropTargetId) => {
+        const handleDragEnd = useCallback((e) => {
+            e.currentTarget.classList.remove('dragging');
+            setDraggedItem(null);
+        }, []);
+
+        const handleDrop = useCallback(async (e, type, dropTargetId) => {
             e.preventDefault();
             if (!draggedItem || draggedItem.type !== type) return;
-
-            const updateOrderInDb = async (tableName, items) => {
-              const updates = items.map(item => ({ id: item.id, order: item.order }));
-              const { error } = await supabase.from(tableName).upsert(updates);
-              if (error) {
-                  alert("Failed to save new order. Please refresh.");
-                  fetchData(); // Revert UI on failure
-              }
-            };
-
+            
             const reorderAndUpdateState = (items) => {
                 let reordered = [...items];
                 const startIndex = reordered.findIndex(item => item.id === draggedItem.id);
                 const endIndex = reordered.findIndex(item => item.id === dropTargetId);
                 if (startIndex === -1 || endIndex === -1 || startIndex === endIndex) return items;
-                
                 const [removed] = reordered.splice(startIndex, 1);
                 reordered.splice(endIndex, 0, removed);
                 return reordered.map((item, index) => ({ ...item, order: index }));
@@ -1048,814 +1276,296 @@
             if (type === 'folder') {
                 const reordered = reorderAndUpdateState(folders);
                 setFolders(reordered);
-                await updateOrderInDb('folders', reordered);
-            } else if (type === 'deck' && activeFolder) {
-                const reorderedDecks = reorderAndUpdateState(activeFolder.decks);
-                const updatedFolders = folders.map(f => f.id === activeFolder.id ? { ...f, decks: reorderedDecks } : f);
-                setFolders(updatedFolders);
-                setActiveFolder(updatedFolders.find(f => f.id === activeFolder.id) || null);
-                await updateOrderInDb('decks', reorderedDecks);
-            } else if (type === 'card' && activeFolder && activeDeck) {
-                const reorderedCards = reorderAndUpdateState(activeDeck.cards);
-                const updatedFolders = folders.map(f => f.id === activeFolder.id ? {
-                    ...f, decks: f.decks.map(d => d.id === activeDeck.id ? { ...d, cards: reorderedCards } : d)
-                } : f);
-                setFolders(updatedFolders);
-                const newActiveFolder = updatedFolders.find(f => f.id === activeFolder.id) || null;
-                setActiveFolder(newActiveFolder);
-                setActiveDeck(newActiveFolder?.decks.find(d => d.id === activeDeck.id) || null);
-                await updateOrderInDb('cards', reorderedCards);
+                await supabase.from('folders').upsert(reordered.map(i => ({ id: i.id, order: i.order })));
+            } else if (type === 'deck') {
+                const reordered = reorderAndUpdateState(decks);
+                setDecks(reordered);
+                await supabase.from('decks').upsert(reordered.map(i => ({ id: i.id, order: i.order })));
+            } else if (type === 'card') {
+                 const reordered = reorderAndUpdateState(cards);
+                 setCards(reordered);
+                 await supabase.from('cards').upsert(reordered.map(i => ({ id: i.id, order: i.order })));
             }
             setSortOption('custom');
-        };
-        
-        const handleDragEnd = (e) => {
-            e.currentTarget.classList.remove('dragging');
-            setDraggedItem(null);
-        };
-        
-        const AnimatedTitle = ({ text, className = '', animate = true }) => {
-          if (!animate) {
-            return <h1 className={className}>{text}</h1>;
-          }
-          return (
-            <h1 className={className}>
-              {text.split('').map((char, index) => (
-                <span
-                  key={index}
-                  className="title-char"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  {char}
-                </span>
-              ))}
-            </h1>
-          );
-        };
+        }, [draggedItem, folders, decks, cards]);
 
-        const CuteButton = ({ children, className, as: Component = 'button', ...props }) => (
-          <Component {...props} className={`bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-md text-[--text-color] font-bold py-2 px-5 rounded-xl transition-transform duration-150 ease-out hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${className || ''}`}>
-              {children}
-          </Component>
-        );
+        const renderContent = () => {
+            // Skeleton loading
+            if (loading) {
+                return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+                    </div>
+                );
+            }
 
-        const FormInput = ({ id, label, ...props}) => (
-            <div className="mb-4">
-                <label htmlFor={id} className="block text-sm font-medium text-[--text-color-light] mb-1">{label}</label>
-                <input id={id} {...props} className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-[--text-color] focus:ring-2 focus:ring-[--accent-color] focus:outline-none"/>
-            </div>
-        );
-        
-        const AuthScreen = () => {
-          const [isSignUp, setIsSignUp] = useState(false);
-          const [email, setEmail] = useState('');
-          const [password, setPassword] = useState('');
-          const [authLoading, setAuthLoading] = useState(false);
-          const [message, setMessage] = useState('');
-
-          const handleAuth = async (e) => {
-              e.preventDefault();
-              setAuthLoading(true);
-              setMessage('');
-              const { error } = isSignUp
-                  ? await supabase.auth.signUp({ email, password })
-                  : await supabase.auth.signInWithPassword({ email, password });
-              
-              if (error) setMessage(error.message);
-              else if (isSignUp) setMessage('Success! Please check your email to verify your account.');
-              setAuthLoading(false);
-          };
-
-          return (
-              <div className="min-h-screen flex items-center justify-center p-4">
-                  <div className="w-full max-w-md">
-                      <div className="glass-card rounded-2xl p-8">
-                          <AnimatedTitle text="Guided" className="text-4xl font-bold mb-2 text-center" />
-                          <p className="text-[--text-color-light] mb-8 text-center">{isSignUp ? 'Create a new account.' : 'Welcome back.'}</p>
-                          <form onSubmit={handleAuth}>
-                              <FormInput id="email" label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-                              <FormInput id="password" label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                              <CuteButton type="submit" disabled={authLoading} className="w-full text-lg py-3">
-                                  {authLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
-                              </CuteButton>
-                          </form>
-                          {message && <p className="mt-4 text-center text-sm text-[--accent-color]">{message}</p>}
-                          <p className="mt-6 text-center text-sm">
-                              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                              <button onClick={() => { setIsSignUp(!isSignUp); setMessage(''); }} className="font-bold text-[--accent-color] hover:underline ml-1">
-                                  {isSignUp ? 'Sign In' : 'Sign Up'}
-                              </button>
-                          </p>
-                      </div>
-                  </div>
-              </div>
-          );
-        };
-        
-        const Header = () => (
-            <header className="p-4 flex justify-between items-center w-full max-w-7xl mx-auto">
-                <div className="flex items-center gap-2">
-                  <Icon name="study" className="w-8 h-8"/>
-                  <AnimatedTitle text="Guided" className="text-2xl font-bold" animate={isFirstLoad} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setModal({ type: 'settings' })} className="p-3 rounded-full hover:bg-white/20 transition-colors">
-                    <Icon name="settings" className="w-6 h-6"/>
-                  </button>
-                  <button onClick={() => supabase.auth.signOut()} className="p-3 rounded-full hover:bg-white/20 transition-colors">
-                    <Icon name="logout" className="w-6 h-6"/>
-                  </button>
-                </div>
-            </header>
-        );
-
-        const Breadcrumbs = () => (
-          <div className="flex items-center gap-2 text-xl font-semibold text-[--text-color-light] mb-4">
-              <button onClick={() => navigateTo('folders')} className="hover:text-[--text-color]">Folders</button>
-              {activeFolder && <span className="text-2xl">/</span>}
-              {activeFolder && <button onClick={() => navigateTo('decks', activeFolder)} className={`hover:text-[--text-color] ${!activeDeck ? 'text-[--text-color]' : ''}`}>{activeFolder.name}</button>}
-              {activeDeck && <span className="text-2xl">/</span>}
-              {activeDeck && <span className="text-[--text-color]">{activeDeck.name}</span>}
-          </div>
-        );
-        
-        const sortAndFilter = (items) => {
-          if (!items) return [];
-          const sorted = [...items].sort(getSortFunction(sortOption));
-          return sorted.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        };
-        
-        const filteredFolders = sortAndFilter(folders);
-        const filteredDecks = sortAndFilter(activeFolder?.decks);
-        const filteredCards = useMemo(() => {
-          if (!activeDeck?.cards) return [];
-          let cardsToFilter = [...activeDeck.cards];
-          
-          switch(sortOption) {
-              case 'name_asc': cardsToFilter.sort((a, b) => a.front.localeCompare(b.front)); break;
-              case 'name_desc': cardsToFilter.sort((a, b) => b.front.localeCompare(a.front)); break;
-              case 'date_asc': cardsToFilter.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()); break;
-              case 'date_desc': cardsToFilter.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break;
-              case 'custom':
-              default: cardsToFilter.sort((a, b) => a.order - b.order); break;
-          }
-
-          if(!searchTerm) return cardsToFilter;
-          return cardsToFilter.filter(card => 
-            card.front.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            card.back.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }, [activeDeck?.cards, sortOption, searchTerm]);
-        
-        const AddEditCardForm = () => {
-          const [frontImage, setFrontImage] = useState({ url: modal.data?.front_image_url });
-          const [backImage, setBackImage] = useState({ url: modal.data?.back_image_url });
-          const [isSubmitting, setIsSubmitting] = useState(false);
-
-          const handleFileChange = async (e, setter) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                  const dataUrl = await fileToDataUrl(file);
-                  setter({ file, url: dataUrl });
-              }
-          };
-
-          const handleSubmit = async (e) => {
-              e.preventDefault();
-              setIsSubmitting(true);
-              const form = e.currentTarget;
-              await handleAddEditCard(form.front.value, form.back.value, frontImage.file, backImage.file, modal.data);
-              setIsSubmitting(false);
-          };
-
-          const FileInput = ({ id, label, onChange, previewUrl, onClear }) => (
-              <div className="mb-4">
-                  <label htmlFor={id} className="block text-sm font-medium text-[--text-color-light] mb-1">{label}</label>
-                  {previewUrl ? (
-                      <div className="flex items-center gap-2">
-                          <img src={previewUrl} className="h-16 w-16 object-contain rounded-md bg-white/10 p-1" />
-                          <button type="button" onClick={onClear} className="p-2 rounded-full hover:bg-white/20"> <Icon name="trash" className="w-5 h-5 text-red-400" /> </button>
-                      </div>
-                  ) : (
-                      <label className="w-full flex items-center justify-center px-4 py-2 bg-white/20 border border-white/30 rounded-lg cursor-pointer hover:bg-white/30">
-                          <Icon name="image" className="w-5 h-5 mr-2 text-[--text-color-light]" />
-                          <span className="text-sm text-[--text-color-light]">Upload Image</span>
-                          <input id={id} type="file" accept="image/*" className="hidden" onChange={onChange} />
-                      </label>
-                  )}
-              </div>
-          );
-          const FormTextArea = ({ id, label, ...props}) => (
-            <div className="mb-4">
-                <label htmlFor={id} className="block text-sm font-medium text-[--text-color-light] mb-1">{label}</label>
-                <textarea id={id} {...props} rows={3} className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-[--text-color] focus:ring-2 focus:ring-[--accent-color] focus:outline-none"/>
-            </div>
-          );
-
-          return (
-              <form onSubmit={handleSubmit}>
-                  <FormTextArea id="front" label="Front" name="front" defaultValue={modal.data?.front || ''} required autoFocus/>
-                  <FileInput id="frontImage" label="Front Image (Optional)" onChange={(e) => handleFileChange(e, setFrontImage)} previewUrl={frontImage.url} onClear={() => setFrontImage({})} />
-                  <FormTextArea id="back" label="Back" name="back" defaultValue={modal.data?.back || ''} required/>
-                  <FileInput id="backImage" label="Back Image (Optional)" onChange={(e) => handleFileChange(e, setBackImage)} previewUrl={backImage.url} onClear={() => setBackImage({})} />
-                  <CuteButton type="submit" disabled={isSubmitting} className="w-full py-3 mt-2">{isSubmitting ? 'Saving...' : modal.type === 'editCard' ? 'Save Changes' : 'Create Card'}</CuteButton>
-              </form>
-          );
-        };
-        
-        const ImportCardsForm = ({ onImport }) => {
-          const [fileContent, setFileContent] = useState('');
-          const [delimiter, setDelimiter] = useState(',');
-          const [replace, setReplace] = useState(false);
-          const [isSubmitting, setIsSubmitting] = useState(false);
-          const [error, setError] = useState('');
-
-          const parsedCards = useMemo(() => {
-              if (!fileContent) return [];
-              try {
-                  setError('');
-                  return fileContent
-                      .split('\n')
-                      .map(line => line.trim())
-                      .filter(line => line)
-                      .map(line => {
-                          const parts = line.split(delimiter);
-                          const front = parts[0]?.trim() || '';
-                          const back = parts[1]?.trim() || '';
-                          if (!front && !back) return null;
-                          return { front, back };
-                      })
-                      .filter((card) => card !== null);
-              } catch (e) {
-                  setError('Failed to parse file. Please check the format and delimiter.');
-                  return [];
-              }
-          }, [fileContent, delimiter]);
-
-          const handleFileChange = (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (event) => {
-                      setFileContent(event.target?.result);
-                      setError('');
-                  };
-                  reader.onerror = () => setError('Could not read the file.');
-                  reader.readAsText(file);
-              }
-          };
-
-          const handleSubmit = async (e) => {
-              e.preventDefault();
-              if (parsedCards.length === 0) {
-                  setError('No valid cards found to import. Please check your file.');
-                  return;
-              }
-              setIsSubmitting(true);
-              setError('');
-              await onImport(parsedCards, replace);
-              setIsSubmitting(false);
-          };
-
-          return (
-              <form onSubmit={handleSubmit}>
-                  <p className="text-sm text-[--text-color-light] mb-4">
-                      Upload a CSV or TSV file. The first column will be the card front, and the second column will be the card back. Headers are not required.
-                  </p>
-
-                  <label className="w-full flex flex-col items-center justify-center px-4 py-6 bg-white/20 border-2 border-dashed border-white/30 rounded-lg cursor-pointer hover:bg-white/30 transition-colors">
-                      <Icon name="import" className="w-8 h-8 mb-2 text-[--text-color-light]" />
-                      <span className="text-base font-semibold text-[--text-color]">
-                          {fileContent ? `${parsedCards.length} cards found` : 'Choose a file or drag it here'}
-                      </span>
-                      <span className="text-xs text-[--text-color-light]">.csv, .tsv, .txt</span>
-                      <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileChange} className="hidden" />
-                  </label>
-
-                  <div className="my-4">
-                      <label className="block text-sm font-medium text-[--text-color-light] mb-2">Delimiter</label>
-                      <div className="flex gap-4 p-1 rounded-full glass-card w-min">
-                          <button type="button" onClick={() => setDelimiter(',')} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${delimiter === ',' ? 'bg-white/30' : 'hover:bg-white/10'}`}>Comma</button>
-                          <button type="button" onClick={() => setDelimiter('\t')} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${delimiter === '\t' ? 'bg-white/30' : 'hover:bg-white/10'}`}>Tab</button>
-                      </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-4">
-                      <input type="checkbox" id="replace-cards" checked={replace} onChange={e => setReplace(e.target.checked)} className="h-4 w-4 rounded accent-[--accent-color] bg-white/20 border-white/30 focus:ring-[--accent-color]" />
-                      <label htmlFor="replace-cards" className="text-sm font-medium text-[--text-color]">Replace all existing cards in this deck</label>
-                  </div>
-
-                  {parsedCards.length > 0 && (
-                      <div className="mt-4">
-                          <h4 className="font-bold text-sm text-[--text-color-light] mb-2">PREVIEW</h4>
-                          <div className="max-h-32 overflow-y-auto bg-white/10 rounded-lg p-2 text-sm">
-                              <table className="w-full text-left">
-                                  <tbody>
-                                      {parsedCards.slice(0, 5).map((card, i) => (
-                                          <tr key={i} className="border-b border-white/10">
-                                              <td className="p-2 truncate" title={card.front}>{card.front}</td>
-                                              <td className="p-2 text-[--text-color-light] truncate" title={card.back}>{card.back}</td>
-                                          </tr>
-                                      ))}
-                                  </tbody>
-                              </table>
-                              {parsedCards.length > 5 && <p className="text-center text-xs p-2 text-[--text-color-light]">...and {parsedCards.length - 5} more cards.</p>}
-                          </div>
-                      </div>
-                  )}
-                  
-                  {error && <p className="text-red-400 text-sm text-center mt-4">{error}</p>}
-
-                  <CuteButton type="submit" disabled={isSubmitting || parsedCards.length === 0} className="w-full py-3 mt-4">
-                      {isSubmitting ? 'Importing...' : `Import ${parsedCards.length} Cards`}
-                  </CuteButton>
-              </form>
-          );
-        };
-
-         const renderContent = () => {
-          if (loading && !folders.length) {
-            return <div className="text-center p-10">Loading your study space...</div>
-          }
-          switch(view) {
-              case 'decks': return (
+            if (view === 'folders') {
+                if (folders.length === 0) return <EmptyState type="folders" onAction={() => setModal({ type: 'addFolder'})} />;
+                return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {filteredDecks.map(deck => (
-                          <div key={deck.id} className="group relative" draggable onDragStart={(e) => handleDragStart(e, 'deck', deck.id)} onDrop={(e) => handleDrop(e, 'deck', deck.id)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-                              <div className="glass-card rounded-2xl p-6 h-48 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105" onClick={() => navigateTo('cards', deck)}>
-                                  <Icon name="deck" className="w-10 h-10"/>
-                                  <h3 className="text-xl font-bold mt-auto truncate">{deck.name}</h3>
-                                  <p className="text-[--text-color-light]">{deck.cards.length} cards</p>
-                              </div>
-                              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Icon name="grip-vertical" className="w-5 h-5 cursor-move text-[--text-color-light]" />
-                                  <button onClick={() => setModal({ type: 'editDeck', data: deck })} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="edit" className="w-4 h-4"/></button>
-                                  <button onClick={() => setModal({ type: 'deleteDeck', data: deck })} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="trash" className="w-4 h-4"/></button>
-                              </div>
-                          </div>
-                      ))}
-                      <button onClick={() => setModal({ type: 'addDeck' })} className="border-2 border-dashed border-[--text-color-light]/50 rounded-2xl flex flex-col items-center justify-center h-48 hover:border-[--text-color] hover:text-[--text-color] text-[--text-color-light] transition-all duration-300 hover:bg-white/10">
-                          <Icon name="plus" className="w-10 h-10"/>
-                          <span className="mt-2 font-semibold">New Deck</span>
-                      </button>
-                  </div>
-              );
-              case 'cards':
-                  return (
-                  <>
-                      <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-                          <div className="flex flex-wrap gap-4">
-                            <CuteButton onClick={() => setStudyModalOpen(true)}><Icon name="study" className="w-5 h-5 inline mr-2"/>Study Deck</CuteButton>
-                            <CuteButton onClick={() => setModal({ type: 'importCards' })}><Icon name="import" className="w-5 h-5 inline mr-2"/>Import</CuteButton>
-                            <CuteButton onClick={handleExportDeck}><Icon name="export" className="w-5 h-5 inline mr-2"/>Export</CuteButton>
-                          </div>
-                          <div className="flex items-center gap-1 p-1 rounded-full glass-card">
-                              <button onClick={() => setCardViewMode('grid')} className={`p-2 rounded-full transition-colors ${cardViewMode === 'grid' ? 'bg-white/30' : 'hover:bg-white/10'}`}><Icon name="layout-grid" className="w-5 h-5" /></button>
-                              <button onClick={() => setCardViewMode('list')} className={`p-2 rounded-full transition-colors ${cardViewMode === 'list' ? 'bg-white/30' : 'hover:bg-white/10'}`}><Icon name="list" className="w-5 h-5" /></button>
-                              {cardViewMode === 'grid' && (
-                                  <div className="flex items-center gap-2 ml-2">
-                                      <button
-                                          onClick={() => setCardGridSizeIndex(i => Math.max(0, i - 1))}
-                                          disabled={cardGridSizeIndex === 0}
-                                          className="p-1.5 rounded-full hover:bg-white/20 disabled:opacity-50 disabled:hover:bg-transparent"
-                                      >
-                                          <Icon name="minus" className="w-4 h-4 text-[--text-color-light]" />
-                                      </button>
-                                      <button onClick={() => setCardGridSizeIndex(DEFAULT_GRID_SIZE_INDEX)} className="p-1.5 rounded-full hover:bg-white/20">
-                                          <Icon name="refresh-ccw" className="w-4 h-4 text-[--text-color-light]" />
-                                      </button>
-                                       <button
-                                          onClick={() => setCardGridSizeIndex(i => Math.min(GRID_SIZE_STEPS.length - 1, i + 1))}
-                                          disabled={cardGridSizeIndex === GRID_SIZE_STEPS.length - 1}
-                                          className="p-1.5 rounded-full hover:bg-white/20 disabled:opacity-50 disabled:hover:bg-transparent"
-                                      >
-                                          <Icon name="plus" className="w-4 h-4 text-[--text-color-light]" />
-                                      </button>
-                                  </div>
-                              )}
-                              {cardViewMode === 'list' && (
-                                  <>
-                                      <div className="w-px h-6 bg-[--glass-border] mx-1"></div>
-                                      <button 
-                                          onClick={() => setCardListDensityIndex(i => (i + 1) % LIST_DENSITY_OPTIONS.length)} 
-                                          className="p-2 rounded-full transition-colors hover:bg-white/10 flex items-center gap-2"
-                                          aria-label="Toggle list density"
-                                      >
-                                          <Icon name="chevrons-up-down" className="w-5 h-5" />
-                                          <span className="text-xs font-bold w-20 text-left">{LIST_DENSITY_OPTIONS[cardListDensityIndex].name}</span>
-                                      </button>
-                                  </>
-                              )}
-                          </div>
-                      </div>
-
-                      {cardViewMode === 'grid' ? (
-                          <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${GRID_SIZE_STEPS[cardGridSizeIndex]}px, 1fr))` }}>
-                              {filteredCards?.map((card, index) => (
-                                  <div key={card.id} className="group relative" draggable onDragStart={(e) => handleDragStart(e, 'card', card.id)} onDrop={(e) => handleDrop(e, 'card', card.id)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-                                       <div className="glass-card rounded-2xl p-5 min-h-[180px] flex flex-col gap-2 transition-transform duration-200 group-hover:scale-[1.03] relative">
-                                          <div className="absolute top-3 left-3 bg-[--accent-color] text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center z-10 select-none">
-                                              {index + 1}
-                                          </div>
-                                          <div className="flex-1">
-                                              <p className="text-xs font-bold uppercase text-[--text-color-light] opacity-50 mb-1 text-center">Front</p>
-                                              {card.front_image_url && <img src={card.front_image_url} className="max-h-24 object-contain rounded-md mx-auto mb-2" />}
-                                              <div className="prose text-[--text-color] max-w-full text-center" dangerouslySetInnerHTML={renderMarkdown(card.front)}></div>
-                                          </div>
-                                          <div className="h-px w-full bg-gradient-to-r from-transparent via-[--glass-border] to-transparent my-1"></div>
-                                          <div className="flex-1">
-                                              <p className="text-xs font-bold uppercase text-[--text-color-light] opacity-50 mb-1 text-center">Back</p>
-                                              {card.back_image_url && <img src={card.back_image_url} className="max-h-24 object-contain rounded-md mx-auto mb-2" />}
-                                              <div className="prose text-[--text-color-light] max-w-full text-center" dangerouslySetInnerHTML={renderMarkdown(card.back)}></div>
-                                          </div>
-                                      </div>
-                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <Icon name="grip-vertical" className="w-5 h-5 cursor-move text-[--text-color-light]" />
-                                          <button onClick={() => setModal({ type: 'editCard', data: card })} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="edit" className="w-4 h-4"/></button>
-                                          <button onClick={() => setModal({ type: 'deleteCard', data: card })} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="trash" className="w-4 h-4"/></button>
-                                      </div>
-                                  </div>
-                              ))}
-                              <button onClick={() => setModal({ type: 'addCard' })} className="border-2 border-dashed border-[--text-color-light]/50 rounded-2xl flex flex-col items-center justify-center min-h-[180px] hover:border-[--text-color] hover:text-[--text-color] text-[--text-color-light] transition-all duration-300 hover:bg-white/10">
-                                  <Icon name="plus" className="w-10 h-10"/>
-                                  <span className="mt-2 font-semibold">New Card</span>
-                              </button>
-                          </div>
-                      ) : (
-                           <div className="space-y-3">
-                              {filteredCards?.map((card, index) => {
-                                  const { padding, prose } = LIST_DENSITY_OPTIONS[cardListDensityIndex];
-                                  return (
-                                      <div key={card.id} className={`group relative glass-card rounded-2xl ${padding} flex items-center gap-4`} draggable onDragStart={(e) => handleDragStart(e, 'card', card.id)} onDrop={(e) => handleDrop(e, 'card', card.id)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-                                          <div className="flex items-center gap-3 text-[--text-color-light] flex-shrink-0">
-                                              <span className="font-semibold text-base w-6 text-right select-none">{index + 1}</span>
-                                              <Icon name="grip-vertical" className="w-5 h-5 cursor-move" />
-                                          </div>
-                                          <div className="grid grid-cols-2 gap-4 flex-grow">
-                                              <div className={`prose ${prose} text-[--text-color] max-w-full`} dangerouslySetInnerHTML={renderMarkdown(card.front)}></div>
-                                              <div className={`prose ${prose} text-[--text-color-light] max-w-full`} dangerouslySetInnerHTML={renderMarkdown(card.back)}></div>
-                                          </div>
-                                          <div className="flex gap-1">
-                                              <button onClick={() => setModal({ type: 'editCard', data: card })} className="p-2 bg-white/20 rounded-full hover:bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="edit" className="w-4 h-4"/></button>
-                                              <button onClick={() => setModal({ type: 'deleteCard', data: card })} className="p-2 bg-white/20 rounded-full hover:bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="trash" className="w-4 h-4"/></button>
-                                          </div>
-                                      </div>
-                                  )
-                              })}
-                               <button onClick={() => setModal({ type: 'addCard' })} className="w-full border-2 border-dashed border-[--text-color-light]/50 rounded-2xl flex items-center justify-center p-4 hover:border-[--text-color] hover:text-[--text-color] text-[--text-color-light] transition-all duration-300 hover:bg-white/10">
-                                  <Icon name="plus" className="w-6 h-6"/>
-                                  <span className="ml-2 font-semibold">New Card</span>
-                              </button>
-                           </div>
-                      )}
-                  </>
-              );
-              case 'folders': 
-              default: return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {filteredFolders.map(folder => (
+                      {folders
+                        .filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .sort((a, b) => a.order - b.order)
+                        .map(folder => (
                           <div key={folder.id} className="group relative" draggable onDragStart={(e) => handleDragStart(e, 'folder', folder.id)} onDrop={(e) => handleDrop(e, 'folder', folder.id)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-                              <div onClick={() => navigateTo('decks', folder)} className="glass-card rounded-2xl p-6 h-48 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105">
-                                  <Icon name="folder" className="w-10 h-10"/>
-                                  <h3 className="text-xl font-bold mt-auto truncate">{folder.name}</h3>
-                                  <p className="text-[--text-color-light]">{folder.decks.length} decks</p>
+                              <div onClick={() => navigateToFolder(folder)} className="glass-card rounded-2xl p-6 h-56 flex flex-col justify-between cursor-pointer transition-all hover:translate-y-[-4px] group-hover:shadow-xl group-hover:border-[--accent-color]/30">
+                                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[--accent-color] to-purple-600 flex items-center justify-center text-white shadow-lg">
+                                      <Icon name="folder" className="w-6 h-6"/>
+                                  </div>
+                                  <div>
+                                      <h3 className="text-xl font-bold truncate mb-1">{folder.name}</h3>
+                                      {/* Note: Decks count is missing here because of lazy loading, can be added via separate count query or ignored for perf */}
+                                  </div>
                               </div>
-                              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Icon name="grip-vertical" className="w-5 h-5 cursor-move text-[--text-color-light]" />
-                                  <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'editFolder', data: folder }); }} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="edit" className="w-4 h-4"/></button>
-                                  <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'deleteFolder', data: folder }); }} className="p-2 bg-white/20 rounded-full hover:bg-white/40"><Icon name="trash" className="w-4 h-4"/></button>
+                              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'editFolder', data: folder }); }} className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 shadow-sm"><Icon name="edit" className="w-4 h-4"/></button>
+                                  <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'deleteFolder', data: folder }); }} className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-red-500/20 hover:text-red-500 shadow-sm"><Icon name="trash" className="w-4 h-4"/></button>
                               </div>
                           </div>
                       ))}
-                      <button onClick={() => setModal({ type: 'addFolder'})} className="border-2 border-dashed border-[--text-color-light]/50 rounded-2xl flex flex-col items-center justify-center h-48 hover:border-[--text-color] hover:text-[--text-color] text-[--text-color-light] transition-all duration-300 hover:bg-white/10">
-                          <Icon name="plus" className="w-10 h-10"/>
-                          <span className="mt-2 font-semibold">New Folder</span>
+                      <button onClick={() => setModal({ type: 'addFolder'})} className="group border-2 border-dashed border-[--glass-border] rounded-2xl flex flex-col items-center justify-center h-56 hover:border-[--accent-color] hover:bg-[--accent-color]/5 transition-all duration-300">
+                          <div className="w-12 h-12 rounded-full bg-[--glass-bg] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                              <Icon name="plus" className="w-6 h-6 text-[--text-color-light] group-hover:text-[--accent-color]"/>
+                          </div>
+                          <span className="font-semibold text-[--text-color-light] group-hover:text-[--accent-color]">New Folder</span>
                       </button>
                   </div>
               );
-          }
-        }
-        
-        // --- THIS ENTIRE FUNCTION WAS REPLACED ---
-        const SettingsContent = ({ onThemeSave, onThemeDelete, allThemes, activeTheme, setActiveTheme, applyTheme }) => {
-          const defaultThemeProps = {
-              colors: {
-                  bgGradientStart: '#fdfbfb', bgGradientEnd: '#ebedee', textColor: '#1f2937', textColorLight: '#6b7280',
-                  glassBg: 'rgba(255, 255, 255, 0.2)', glassBorder: 'rgba(255, 255, 255, 0.3)',
-                  shadowColor: 'rgba(0, 0, 0, 0.1)', accentColor: '#8b5cf6',
-              },
-              isAnimated: false,
-              animationDuration: '15s'
-          };
-          const [editingTheme, setEditingTheme] = useState(null);
+            }
+            
+            if (view === 'decks') {
+                const filteredDecks = decks.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                if (decks.length === 0) return <EmptyState type="decks" onAction={() => setModal({ type: 'addDeck' })} />;
+                
+                return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {filteredDecks.map(deck => (
+                            <div key={deck.id} className="group relative" draggable onDragStart={(e) => handleDragStart(e, 'deck', deck.id)} onDrop={(e) => handleDrop(e, 'deck', deck.id)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+                                <div onClick={() => navigateToDeck(deck)} className="glass-card rounded-2xl p-6 h-56 flex flex-col justify-between cursor-pointer transition-all hover:translate-y-[-4px] group-hover:shadow-xl group-hover:border-[--accent-color]/30">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                                        <Icon name="deck" className="w-6 h-6"/>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold truncate mb-1">{deck.name}</h3>
+                                    </div>
+                                </div>
+                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'editDeck', data: deck }); }} className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 shadow-sm"><Icon name="edit" className="w-4 h-4"/></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setModal({ type: 'deleteDeck', data: deck }); }} className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-red-500/20 hover:text-red-500 shadow-sm"><Icon name="trash" className="w-4 h-4"/></button>
+                                </div>
+                            </div>
+                        ))}
+                        <button onClick={() => setModal({ type: 'addDeck' })} className="group border-2 border-dashed border-[--glass-border] rounded-2xl flex flex-col items-center justify-center h-56 hover:border-[--accent-color] hover:bg-[--accent-color]/5 transition-all duration-300">
+                            <div className="w-12 h-12 rounded-full bg-[--glass-bg] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <Icon name="plus" className="w-6 h-6 text-[--text-color-light] group-hover:text-[--accent-color]"/>
+                            </div>
+                            <span className="font-semibold text-[--text-color-light] group-hover:text-[--accent-color]">New Deck</span>
+                        </button>
+                    </div>
+                );
+            }
 
-          // Live preview effect
-          useEffect(() => {
-              if (editingTheme) {
-                  applyTheme(editingTheme);
-              }
-          }, [editingTheme, applyTheme]);
+            if (view === 'cards') {
+                const filteredCards = cards.filter(c => 
+                    c.front.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    c.back.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                
+                return (
+                    <>
+                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 glass-card p-4 rounded-2xl">
+                            <div className="flex gap-3">
+                                <CuteButton onClick={() => setStudyModalOpen(true)} className="!bg-[--accent-color] !text-white border-none">
+                                    <Icon name="study" className="w-5 h-5"/> Study Now
+                                </CuteButton>
+                                <CuteButton onClick={() => setModal({ type: 'importCards' })}>
+                                    <Icon name="import" className="w-5 h-5"/> Import
+                                </CuteButton>
+                            </div>
+                            <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl">
+                                <button onClick={() => setCardViewMode('grid')} className={`p-2 rounded-lg transition-colors ${cardViewMode === 'grid' ? 'bg-white/20 text-[--text-color]' : 'text-[--text-color-light] hover:text-[--text-color]'}`}><Icon name="layout-grid" className="w-5 h-5" /></button>
+                                <button onClick={() => setCardViewMode('list')} className={`p-2 rounded-lg transition-colors ${cardViewMode === 'list' ? 'bg-white/20 text-[--text-color]' : 'text-[--text-color-light] hover:text-[--text-color]'}`}><Icon name="list" className="w-5 h-5" /></button>
+                                <div className="w-px h-4 bg-[--glass-border] mx-1"></div>
+                                {cardViewMode === 'grid' ? (
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={() => setCardGridSizeIndex(i => Math.max(0, i - 1))} className="p-1.5 rounded-lg hover:bg-white/10 text-[--text-color-light]"><Icon name="minus" className="w-4 h-4" /></button>
+                                        <button onClick={() => setCardGridSizeIndex(i => Math.min(GRID_SIZE_STEPS.length - 1, i + 1))} className="p-1.5 rounded-lg hover:bg-white/10 text-[--text-color-light]"><Icon name="plus" className="w-4 h-4" /></button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setCardListDensityIndex(i => (i + 1) % LIST_DENSITY_OPTIONS.length)} className="p-1.5 rounded-lg hover:bg-white/10 text-xs font-bold w-20 text-center text-[--text-color-light]">{LIST_DENSITY_OPTIONS[cardListDensityIndex].name}</button>
+                                )}
+                            </div>
+                        </div>
 
-          const handleStartEditing = (theme) => {
-              if (theme) {
-                  // Ensure old themes get new properties
-                  setEditingTheme({
-                      ...defaultThemeProps,
-                      ...theme,
-                      colors: { ...defaultThemeProps.colors, ...theme.colors },
-                  });
-              } else {
-                  setEditingTheme({
-                      id: `custom-${Date.now()}`,
-                      name: 'My New Theme',
-                      ...defaultThemeProps,
-                  });
-              }
-          };
+                        {filteredCards.length === 0 ? <EmptyState type="cards" onAction={() => setModal({ type: 'addCard'})} /> : (
+                            <div className={cardViewMode === 'grid' ? 'grid gap-6' : 'space-y-3'} style={cardViewMode === 'grid' ? { gridTemplateColumns: `repeat(auto-fill, minmax(${GRID_SIZE_STEPS[cardGridSizeIndex]}px, 1fr))` } : {}}>
+                                {filteredCards.map((card, index) => (
+                                    cardViewMode === 'grid' ? (
+                                        <CardGridItem 
+                                            key={card.id} 
+                                            card={card} 
+                                            index={index}
+                                            gridSize={GRID_SIZE_STEPS[cardGridSizeIndex]}
+                                            onEdit={(c) => setModal({ type: 'editCard', data: c })}
+                                            onDelete={(c) => setModal({ type: 'deleteCard', data: c })}
+                                            onDragStart={handleDragStart}
+                                            onDrop={handleDrop}
+                                            onDragOver={handleDragOver}
+                                            onDragEnd={handleDragEnd}
+                                        />
+                                    ) : (
+                                        <CardListItem 
+                                            key={card.id} 
+                                            card={card} 
+                                            index={index}
+                                            density={LIST_DENSITY_OPTIONS[cardListDensityIndex]}
+                                            onEdit={(c) => setModal({ type: 'editCard', data: c })}
+                                            onDelete={(c) => setModal({ type: 'deleteCard', data: c })}
+                                            onDragStart={handleDragStart}
+                                            onDrop={handleDrop}
+                                            onDragOver={handleDragOver}
+                                            onDragEnd={handleDragEnd}
+                                        />
+                                    )
+                                ))}
+                                <button onClick={() => setModal({ type: 'addCard' })} className={`border-2 border-dashed border-[--glass-border] rounded-2xl flex items-center justify-center hover:border-[--accent-color] hover:bg-[--accent-color]/5 transition-all text-[--text-color-light] hover:text-[--accent-color] font-semibold ${cardViewMode === 'grid' ? 'min-h-[180px] flex-col' : 'w-full p-4'}`}>
+                                    <Icon name="plus" className="w-6 h-6 mb-1"/>
+                                    <span>Add Card</span>
+                                </button>
+                            </div>
+                        )}
+                    </>
+                );
+            }
+        };
 
-          const handleFormChange = (e) => {
-              if (!editingTheme) return;
-              const { name, value, type, checked } = e.target;
-              
-              if (name === 'name') {
-                  setEditingTheme({ ...editingTheme, name: value });
-              } else if (name === 'isAnimated') {
-                  setEditingTheme({ ...editingTheme, isAnimated: checked });
-              } else if (name === 'animationDuration') {
-                  setEditingTheme({ ...editingTheme, animationDuration: value });
-              } else {
-                  // It's a color
-                  setEditingTheme({ ...editingTheme, colors: { ...editingTheme.colors, [name]: value } });
-              }
-          };
-
-          const handleSaveAndApply = () => {
-              if (editingTheme) {
-                  onThemeSave(editingTheme); // This will set activeTheme
-                  setEditingTheme(null);
-              }
-          };
-          
-          const handleDelete = () => {
-              if(editingTheme) {
-                  onThemeDelete(editingTheme.id); // This will reset activeTheme if needed
-                  setEditingTheme(null);
-              }
-          };
-
-          const handleCancel = () => {
-              setEditingTheme(null);
-              applyTheme(activeTheme); // Re-apply the saved active theme
-          };
-
-          const ColorInput = ({label, name, value, isText = false}) => (
-              <div className="flex items-center justify-between">
-                  <label className="text-sm">{label}</label>
-                  {isText ? (
-                      <input 
-                          type="text" 
-                          name={name} 
-                          value={value} 
-                          onChange={handleFormChange} 
-                          className="w-32 bg-white/20 border border-white/30 rounded-md p-1 text-xs text-[--text-color] focus:ring-1 focus:ring-[--accent-color] focus:outline-none"
-                          placeholder="e.g., rgba(255, 255, 255, 0.2)"
-                      />
-                  ) : (
-                      <input 
-                          type="color" 
-                          name={name} 
-                          value={value} 
-                          onChange={handleFormChange} 
-                          className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent" 
-                      />
-                  )}
-              </div>
-          );
-          
-          const currentThemeId = typeof activeTheme === 'string' ? activeTheme : activeTheme.id;
-
-          return (
-              <div>
-                  <h3 className="font-bold text-lg mb-2">Appearance</h3>
-                  <p className="text-sm text-[--text-color-light] mb-4">Select a preset theme or create your own.</p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-6">
-                      {allThemes.map(theme => {
-                          const isPreset = 'class' in theme;
-                          const isActive = currentThemeId === theme.id;
-                          return (
-                              <div key={theme.id} className="relative group">
-                                   <button 
-                                      onClick={() => {
-                                        setEditingTheme(null);
-                                        setActiveTheme(isPreset ? theme.id : theme);
-                                      }} 
-                                      className={`w-full aspect-square rounded-lg flex items-center justify-center text-center p-2 border-2 transition-all ${isActive && !editingTheme ? 'border-[--accent-color]' : 'border-transparent hover:border-white/50'}`}
-                                    >
-                                      <div className={`w-full h-full rounded-md ${isPreset ? theme.class : ''}`} style={!isPreset ? { background: `linear-gradient(135deg, ${theme.colors.bgGradientStart}, ${theme.colors.bgGradientEnd})`} : {}}></div>
-                                   </button>
-                                   <p className="text-xs text-center mt-1 truncate">{theme.name}</p>
-                                  {!isPreset && (
-                                      <button onClick={() => handleStartEditing(theme)} className={`absolute top-1 right-1 p-1 bg-black/30 rounded-full transition-opacity ${editingTheme?.id === theme.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                          <Icon name="edit" className="w-3 h-3 text-white"/>
-                                      </button>
-                                  )}
-                              </div>
-                          )
-                      })}
-                       <button onClick={() => handleStartEditing()} className={`w-full aspect-square rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-[--text-color-light]/50 hover:border-[--text-color] transition-colors ${editingTheme && editingTheme.id.startsWith('custom-') ? 'border-[--accent-color]' : 'hover:border-[--text-color]'}`}>
-                          <Icon name="plus" className="w-8 h-8 text-[--text-color-light]"/>
-                          <span className="text-xs mt-1">Create</span>
-                      </button>
-                  </div>
-
-                  {editingTheme && (
-                      <div className="p-4 rounded-lg bg-white/10 mt-4">
-                          <h4 className="font-bold mb-3">{editingTheme.id.startsWith('custom-') ? 'Create New Theme' : 'Edit Theme'}</h4>
-                          <FormInput id="name" label="Theme Name" name="name" value={editingTheme.name} onChange={handleFormChange} />
-                          
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
-                              <ColorInput label="Gradient Start" name="bgGradientStart" value={editingTheme.colors.bgGradientStart} />
-                              <ColorInput label="Gradient End" name="bgGradientEnd" value={editingTheme.colors.bgGradientEnd} />
-                              <ColorInput label="Text" name="textColor" value={editingTheme.colors.textColor} />
-                              <ColorInput label="Text Light" name="textColorLight" value={editingTheme.colors.textColorLight} />
-                              <ColorInput label="Accent" name="accentColor" value={editingTheme.colors.accentColor} />
-                              <ColorInput label="Glass BG" name="glassBg" value={editingTheme.colors.glassBg} isText={true} />
-                              <ColorInput label="Glass Border" name="glassBorder" value={editingTheme.colors.glassBorder} isText={true} />
-                              <ColorInput label="Shadow" name="shadowColor" value={editingTheme.colors.shadowColor} isText={true} />
-                          </div>
-
-                          <div className="h-px bg-white/20 my-4"></div>
-                          
-                          <h4 className="font-bold mb-3">Animation</h4>
-                          <div className="flex items-center justify-between mb-3">
-                              <label htmlFor="isAnimated" className="text-sm font-medium">Animated Background</label>
-                              <input 
-                                  type="checkbox" 
-                                  id="isAnimated" 
-                                  name="isAnimated"
-                                  checked={editingTheme.isAnimated} 
-                                  onChange={handleFormChange} 
-                                  className="h-5 w-5 rounded accent-[--accent-color] bg-white/20 border-white/30 focus:ring-[--accent-color]" 
-                              />
-                          </div>
-                          {editingTheme.isAnimated && (
-                              <FormInput 
-                                  id="animationDuration" 
-                                  label="Animation Duration (e.g., 15s)" 
-                                  name="animationDuration" 
-                                  value={editingTheme.animationDuration} 
-                                  onChange={handleFormChange} 
-                              />
-                          )}
-
-                           <div className="flex justify-between items-center mt-4">
-                              <div>
-                               {!editingTheme.id.startsWith('custom-') && <button onClick={handleDelete} className="text-red-400 text-sm font-semibold hover:underline">Delete</button>}
-                              </div>
-                              <div className="flex gap-2">
-                                  <CuteButton onClick={handleCancel} className="!py-1 !px-3 !from-white/20 !to-white/10">Cancel</CuteButton>
-                                  <CuteButton onClick={handleSaveAndApply} className="!py-1 !px-3">Save & Apply</CuteButton>
-                              </div>
-                          </div>
-                      </div>
-                  )}
-              </div>
-          )
-        }
-        // --- END REPLACED FUNCTION ---
-
-        const renderModalContent = () => {
-          switch(modal.type) {
-            case 'addFolder': case 'editFolder': return (
-              <form onSubmit={(e) => { e.preventDefault(); handleAddEditFolder(e.currentTarget.folderName.value); }}>
-                <FormInput id="folderName" label="Folder Name" name="folderName" type="text" defaultValue={modal.data?.name || ''} required autoFocus/>
-                <CuteButton type="submit" className="w-full py-3 mt-2">{modal.type === 'editFolder' ? 'Save Changes' : 'Create Folder'}</CuteButton>
-              </form>
-            );
-            case 'deleteFolder': return (
-              <div>
-                <p className="mb-4">Are you sure you want to delete the folder "{modal.data?.name}" and all its contents?</p>
-                <div className="flex justify-end gap-2">
-                  <CuteButton onClick={() => setModal({type: null})}>Cancel</CuteButton>
-                  <CuteButton onClick={() => handleDeleteFolder(modal.data?.id)} className="!bg-red-500/50 !from-red-500/50 !to-red-500/30 text-white">Delete</CuteButton>
-                </div>
-              </div>
-            );
-            case 'addDeck': case 'editDeck': return (
-              <form onSubmit={(e) => { e.preventDefault(); handleAddEditDeck(e.currentTarget.deckName.value); }}>
-                <FormInput id="deckName" label="Deck Name" name="deckName" type="text" defaultValue={modal.data?.name || ''} required autoFocus/>
-                <CuteButton type="submit" className="w-full py-3 mt-2">{modal.type === 'editDeck' ? 'Save Changes' : 'Create Deck'}</CuteButton>
-              </form>
-            );
-            case 'deleteDeck': return (
-              <div>
-                <p className="mb-4">Are you sure you want to delete the deck "{modal.data?.name}"?</p>
-                <div className="flex justify-end gap-2">
-                  <CuteButton onClick={() => setModal({type: null})}>Cancel</CuteButton>
-                  <CuteButton onClick={() => handleDeleteDeck(modal.data?.id)} className="!bg-red-500/50 !from-red-500/50 !to-red-500/30 text-white">Delete</CuteButton>
-                </div>
-              </div>
-            );
-            case 'addCard': case 'editCard': return <AddEditCardForm />;
-            case 'deleteCard': return (
-              <div>
-                <p className="mb-4">Are you sure you want to delete this card?</p>
-                <div className="flex justify-end gap-2">
-                  <CuteButton onClick={() => setModal({type: null})}>Cancel</CuteButton>
-                  <CuteButton onClick={() => handleDeleteCard(modal.data?.id)} className="!bg-red-500/50 !from-red-500/50 !to-red-500/30 text-white">Delete</CuteButton>
-                </div>
-              </div>
-            );
-            case 'importCards': return <ImportCardsForm onImport={handleBulkAddCards} />;
-            // --- THIS LINE WAS MODIFIED ---
-            case 'settings': return <SettingsContent 
-                                        onThemeSave={handleCustomThemeSave}
-                                        onThemeDelete={handleCustomThemeDelete}
-                                        allThemes={[...presetThemes, ...customThemes]}
-                                        activeTheme={activeTheme}
-                                        setActiveTheme={setActiveTheme}
-                                        applyTheme={applyTheme}
-                                    />;
-            default: return null;
-          }
-        }
-
-        const sortOptions = [
-          { value: 'custom', label: 'Custom Order' },
-          { value: 'name_asc', label: 'Name (A-Z)' },
-          { value: 'name_desc', label: 'Name (Z-A)' },
-          { value: 'date_desc', label: 'Newest First' },
-          { value: 'date_asc', label: 'Oldest First' },
-        ];
-
-        if (loading && !session) return <div></div>;
         if (!session) return <AuthScreen />;
 
         return (
-          <div className="min-h-screen w-full">
-            <Header />
-            <main className="p-4 sm:p-6 w-full max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-                <Breadcrumbs />
-                 <div className="flex items-center gap-4">
-                      <div className="relative">
-                          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[--text-color-light]"/>
-                          <input 
-                              type="text" 
-                              placeholder="Search..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10 pr-4 py-2 w-full sm:w-48 bg-white/10 border border-white/20 rounded-full focus:ring-2 focus:ring-[--accent-color] focus:outline-none"
-                          />
-                      </div>
-                       <Dropdown
-                          options={sortOptions}
-                          value={sortOption}
-                          onChange={(val) => setSortOption(val)}
-                          className="w-48"
-                        />
-                  </div>
-              </div>
+            <div className="min-h-screen w-full flex flex-col">
+              <header className="sticky top-0 z-40 w-full border-b border-[--glass-border] bg-[--glass-bg] backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={navigateBackToFolders}>
+                        <div className="p-2 bg-[--accent-color] rounded-lg text-white shadow-md">
+                            <Icon name="study" className="w-5 h-5"/>
+                        </div>
+                        <AnimatedTitle text="Guided" className="text-xl font-bold tracking-tight" animate={isFirstLoad} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setModal({ type: 'settings' })} className="p-2 rounded-full hover:bg-white/10 text-[--text-color-light] hover:text-[--text-color] transition-colors"><Icon name="settings" className="w-5 h-5"/></button>
+                        <div className="h-6 w-px bg-[--glass-border]"></div>
+                        <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-500/10 hover:text-red-500 text-[--text-color] transition-colors text-sm font-medium"><span>Sign Out</span><Icon name="logout" className="w-4 h-4"/></button>
+                    </div>
+                </div>
+              </header>
+
+              <main className="flex-1 p-4 sm:p-8 w-full max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                   <div className="flex items-center gap-2 text-lg font-medium text-[--text-color-light]">
+                      <button onClick={navigateBackToFolders} className="hover:text-[--text-color] transition-colors">Library</button>
+                      {activeFolder && (
+                          <>
+                            <Icon name="chevron-down" className="w-4 h-4 -rotate-90 opacity-50"/>
+                            <button onClick={navigateBackToDecks} className={`hover:text-[--text-color] transition-colors ${view === 'decks' ? 'text-[--text-color] font-bold' : ''}`}>{activeFolder.name}</button>
+                          </>
+                      )}
+                      {activeDeck && (
+                          <>
+                            <Icon name="chevron-down" className="w-4 h-4 -rotate-90 opacity-50"/>
+                            <span className="text-[--text-color] font-bold">{activeDeck.name}</span>
+                          </>
+                      )}
+                   </div>
+                   <div className="flex items-center gap-3">
+                        <div className="relative group">
+                            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-color-light] group-focus-within:text-[--accent-color] transition-colors"/>
+                            <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2 w-full sm:w-64 bg-white/10 border border-[--glass-border] rounded-full focus:ring-2 focus:ring-[--accent-color] focus:outline-none transition-all text-sm" />
+                        </div>
+                   </div>
+                </div>
+                
+                {renderContent()}
+              </main>
               
-              {renderContent()}
-            </main>
-            
-            <Modal 
-              isOpen={modal.type !== null} 
-              onClose={() => setModal({ type: null })}
-              title={
-                  modal.type?.includes('add') ? `Create New ${modal.type.includes('Folder') ? 'Folder' : modal.type.includes('Deck') ? 'Deck' : 'Card'}` : 
-                  modal.type?.includes('edit') ? `Edit ${modal.type.includes('Folder') ? 'Folder' : modal.type.includes('Deck') ? 'Deck' : 'Card'}` :
-                  modal.type?.includes('delete') ? 'Confirm Deletion' : 
-                  modal.type === 'settings' ? 'Settings' :
-                  modal.type === 'importCards' ? 'Import Cards' : ''
-              }
-             >
-              {renderModalContent()}
-             </Modal>
-             
-             <StudyModal 
-                  isOpen={studyModalOpen}
-                  onClose={() => setStudyModalOpen(false)}
-                  deckName={activeDeck?.name || ''}
-                  cards={activeDeck?.cards || []}
-             />
-          </div>
+              <Modal 
+                isOpen={modal.type !== null} 
+                onClose={() => setModal({ type: null })}
+                title={
+                    modal.type?.includes('add') ? `Create ${modal.type.replace('add', '')}` : 
+                    modal.type?.includes('edit') ? `Edit ${modal.type.replace('edit', '')}` :
+                    modal.type?.includes('delete') ? 'Delete Item' : 
+                    modal.type === 'settings' ? 'Theme Settings' :
+                    modal.type === 'importCards' ? 'Import Cards' : ''
+                }
+               >
+                {modal.type?.includes('Folder') && (
+                     <form onSubmit={(e) => { e.preventDefault(); handleAddEditFolder(e.currentTarget.name.value); }}>
+                        <FormInput id="name" label="Folder Name" defaultValue={modal.data?.name} required autoFocus/>
+                        <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">{modal.type.includes('add') ? 'Create' : 'Save'}</CuteButton>
+                     </form>
+                )}
+                 {modal.type?.includes('Deck') && (
+                     <form onSubmit={(e) => { e.preventDefault(); handleAddEditDeck(e.currentTarget.name.value); }}>
+                        <FormInput id="name" label="Deck Name" defaultValue={modal.data?.name} required autoFocus/>
+                        <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">{modal.type.includes('add') ? 'Create' : 'Save'}</CuteButton>
+                     </form>
+                )}
+                {modal.type?.includes('delete') && (
+                    <div>
+                        <p className="mb-6 text-[--text-color-light]">Are you sure you want to delete this? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-3">
+                            <CuteButton onClick={() => setModal({type: null})}>Cancel</CuteButton>
+                            <CuteButton onClick={() => {
+                                if (modal.type === 'deleteFolder') handleDeleteFolder(modal.data.id);
+                                if (modal.type === 'deleteDeck') handleDeleteDeck(modal.data.id);
+                                if (modal.type === 'deleteCard') handleDeleteCard(modal.data.id);
+                            }} className="!bg-red-500 !text-white border-none">Delete</CuteButton>
+                        </div>
+                    </div>
+                )}
+                {modal.type?.includes('Card') && !modal.type.includes('delete') && (
+                    <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const front = e.target.front.value;
+                        const back = e.target.back.value;
+                        await handleAddEditCard(front, back, null, null, modal.data);
+                    }}>
+                         <div className="mb-4"><label className="block text-sm font-semibold mb-1 ml-1 text-[--text-color-light]">Front</label><textarea name="front" defaultValue={modal.data?.front} className="w-full bg-white/10 border border-[--glass-border] rounded-xl p-3 focus:ring-2 focus:ring-[--accent-color] focus:outline-none h-24 resize-none" required autoFocus></textarea></div>
+                         <div className="mb-6"><label className="block text-sm font-semibold mb-1 ml-1 text-[--text-color-light]">Back</label><textarea name="back" defaultValue={modal.data?.back} className="w-full bg-white/10 border border-[--glass-border] rounded-xl p-3 focus:ring-2 focus:ring-[--accent-color] focus:outline-none h-24 resize-none" required></textarea></div>
+                         <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">Save Card</CuteButton>
+                    </form>
+                )}
+                 {modal.type === 'importCards' && (
+                     <form onSubmit={(e) => {
+                         e.preventDefault();
+                         const text = e.target.csv.value;
+                         const cards = text.split('\n').map(l => { const [f, b] = l.split(','); return (f && b) ? {front: f.trim(), back: b.trim()} : null; }).filter(Boolean);
+                         handleBulkAddCards(cards, false);
+                     }}>
+                         <p className="text-sm mb-4 text-[--text-color-light]">Paste CSV content (Front, Back):</p>
+                         <textarea name="csv" className="w-full h-32 bg-white/10 border border-[--glass-border] rounded-xl p-3 mb-4 font-mono text-sm" placeholder="Question, Answer&#10;Cat, Gato"></textarea>
+                         <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">Import</CuteButton>
+                     </form>
+                 )}
+                 {modal.type === 'settings' && (
+                     <SettingsContent activeTheme={activeTheme} setActiveTheme={setActiveTheme} applyTheme={applyTheme} customThemes={customThemes} onThemeSave={handleCustomThemeSave} onThemeDelete={handleCustomThemeDelete} />
+                 )}
+               </Modal>
+               <StudyModal isOpen={studyModalOpen} onClose={() => setStudyModalOpen(false)} deckName={activeDeck?.name || ''} cards={cards || []} />
+            </div>
         );
       }
-      
-      // --- From index.tsx ---
-      const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error("Could not find root element to mount to");
+
+      function App() {
+        return (
+          <ToastProvider>
+            <FlashcardApp />
+          </ToastProvider>
+        );
       }
 
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
-      );
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<React.StrictMode><App /></React.StrictMode>);
     </script>
   </body>
 </html>
