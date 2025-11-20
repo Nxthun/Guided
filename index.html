@@ -1246,6 +1246,30 @@
           setModal({ type: null });
         };
 
+        // --- NEW: Export Functionality ---
+        const handleExportDeck = () => {
+          if (!activeDeck) return;
+          if (cards.length === 0) return addToast('No cards to export.', 'info');
+
+          // Helper to handle commas/quotes in CSV
+          const escapeCsvField = (field) => `"${String(field || '').replace(/"/g, '""')}"`;
+          
+          const csvContent = cards
+            .map(c => [escapeCsvField(c.front), escapeCsvField(c.back)].join(','))
+            .join('\n');
+          
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", `${activeDeck.name}.csv`);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          addToast('Deck exported successfully.', 'success');
+        };
+
         const handleDragStart = useCallback((e, type, id) => {
             setDraggedItem({ type, id });
             e.dataTransfer.setData(`application/${type}-id`, id);
@@ -1380,6 +1404,10 @@
                                 </CuteButton>
                                 <CuteButton onClick={() => setModal({ type: 'importCards' })}>
                                     <Icon name="import" className="w-5 h-5"/> Import
+                                </CuteButton>
+                                {/* Export Button Added Here */}
+                                <CuteButton onClick={handleExportDeck}>
+                                    <Icon name="export" className="w-5 h-5"/> Export
                                 </CuteButton>
                             </div>
                             <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl">
