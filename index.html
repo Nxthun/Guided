@@ -20,12 +20,14 @@
 
     <style>
       :root {
-        --bg-gradient: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
-        --text-color: #1f2937;
-        --text-color-light: #6b7280;
-        --glass-bg: rgba(255, 255, 255, 0.65);
-        --glass-border: rgba(255, 255, 255, 0.5);
-        --shadow-color: rgba(0, 0, 0, 0.05);
+        /* OLD: --bg-gradient: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%); */
+        /* NEW: Softer "Morning Mist" gray-blue gradient to reduce glare */
+        --bg-gradient: linear-gradient(120deg, #e2ebf0 0%, #cfd9df 100%);
+        --text-color: #111827; /* Slightly darker for better contrast */
+        --text-color-light: #4b5563;
+        --glass-bg: rgba(255, 255, 255, 0.55); /* Slightly more opaque for readability */
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --shadow-color: rgba(0, 0, 0, 0.08);
         --accent-color: #8b5cf6;
         --bg-animation: none;
       }
@@ -449,11 +451,23 @@
             }, 200);
         }, []);
 
+        // FIX: Calculate state updates before passing to pickNextCard to prevent premature session end
         const handleRate = useCallback((rating) => {
             if (!currentCard) return;
-            if (rating === 'again') setLearningCards(prev => [...prev, currentCard]);
-            else setCompletedCards(prev => [...prev, currentCard]);
-            pickNextCard(unseenCards, learningCards);
+            
+            let nextLearningCards = [...learningCards];
+            
+            if (rating === 'again') {
+                // Add to local variable for immediate logic
+                nextLearningCards.push(currentCard);
+                // Schedule state update
+                setLearningCards(prev => [...prev, currentCard]);
+            } else {
+                setCompletedCards(prev => [...prev, currentCard]);
+            }
+            
+            // Pass the FUTURE state of learning cards to the picker
+            pickNextCard(unseenCards, nextLearningCards);
         }, [currentCard, unseenCards, learningCards, pickNextCard]);
 
         useEffect(() => {
@@ -757,13 +771,14 @@
       };
       
       const SettingsContent = ({ activeTheme, setActiveTheme, applyTheme, customThemes, onThemeSave, onThemeDelete }) => {
-          // ... (same as before)
+          // ... existing SettingsContent code ...
           const presets = [
-              { id: 'light', name: 'Light', preview: 'linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)' },
+              { id: 'light', name: 'Light', preview: 'linear-gradient(120deg, #e2ebf0 0%, #cfd9df 100%)' },
               { id: 'dark', name: 'Dark', preview: '#0f172a' },
               { id: 'kirby', name: 'Kirby', preview: 'linear-gradient(120deg, #fbc2eb 0%, #a6c1ee 100%)' },
               { id: 'forest', name: 'Forest', preview: 'linear-gradient(120deg, #134e5e 0%, #71b280 100%)' }
           ];
+// ... (keep existing SettingsContent implementation same as before) ...
           const defaultCustom = {
               name: 'New Theme',
               colors: {
@@ -859,6 +874,177 @@
               </div>
           );
       };
+
+      // --- NEW: Export Modal Component ---
+      const ExportModalContent = ({ onExport }) => {
+          return (
+              <div className="space-y-6">
+                  <p className="text-[--text-color-light]">Select a format to export your deck.</p>
+                  <div className="grid grid-cols-1 gap-4">
+                      <button 
+                        onClick={() => onExport('csv')} 
+                        className="flex items-center justify-between p-4 rounded-xl bg-white/10 border border-[--glass-border] hover:bg-white/20 hover:border-[--accent-color] transition-all group"
+                      >
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-500 font-bold text-xs">CSV</div>
+                             <div className="text-left">
+                                 <h4 className="font-bold text-[--text-color]">Comma Separated</h4>
+                                 <p className="text-xs text-[--text-color-light]">Standard format, works with Excel/Sheets.</p>
+                             </div>
+                          </div>
+                          <Icon name="export" className="w-5 h-5 text-[--text-color-light] group-hover:text-[--accent-color]" />
+                      </button>
+
+                      <button 
+                        onClick={() => onExport('txt')} 
+                        className="flex items-center justify-between p-4 rounded-xl bg-white/10 border border-[--glass-border] hover:bg-white/20 hover:border-[--accent-color] transition-all group"
+                      >
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold text-xs">TXT</div>
+                             <div className="text-left">
+                                 <h4 className="font-bold text-[--text-color]">Tab Separated</h4>
+                                 <p className="text-xs text-[--text-color-light]">Plain text, ideal for Anki imports.</p>
+                             </div>
+                          </div>
+                          <Icon name="export" className="w-5 h-5 text-[--text-color-light] group-hover:text-[--accent-color]" />
+                      </button>
+                  </div>
+              </div>
+          );
+      }
+
+      // --- NEW: Import Modal Component ---
+      const ImportModalContent = ({ onImport, addToast }) => {
+          const [mode, setMode] = useState('paste'); // 'paste' or 'upload'
+          const [delimiter, setDelimiter] = useState(',');
+          const [textInput, setTextInput] = useState('');
+          const [file, setFile] = useState(null);
+          const [isProcessing, setIsProcessing] = useState(false);
+
+          const handleFileChange = (e) => {
+              if (e.target.files && e.target.files[0]) {
+                  setFile(e.target.files[0]);
+              }
+          };
+
+          const handleSubmit = async (e) => {
+              e.preventDefault();
+              setIsProcessing(true);
+              
+              let content = '';
+
+              if (mode === 'upload') {
+                  if (!file) {
+                      addToast('Please select a file.', 'error');
+                      setIsProcessing(false);
+                      return;
+                  }
+                  try {
+                      content = await new Promise((resolve, reject) => {
+                          const reader = new FileReader();
+                          reader.onload = (e) => resolve(e.target.result);
+                          reader.onerror = (e) => reject(e);
+                          reader.readAsText(file);
+                      });
+                  } catch (err) {
+                      addToast('Failed to read file.', 'error');
+                      setIsProcessing(false);
+                      return;
+                  }
+              } else {
+                  if (!textInput.trim()) {
+                      addToast('Please paste some content.', 'error');
+                      setIsProcessing(false);
+                      return;
+                  }
+                  content = textInput;
+              }
+
+              // Parse logic
+              // Basic parser: handles basic delimiters. For more complex CSVs (quoted fields), a library is better, but this suffices for simple flashcards.
+              const lines = content.split(/\r?\n/);
+              const parsedCards = lines.map(line => {
+                  if (!line.trim()) return null;
+                  // Simple split. Note: This fails if the content itself contains the delimiter.
+                  // A slightly better approach for simple usage:
+                  const parts = line.split(delimiter);
+                  if (parts.length < 2) return null;
+                  
+                  // Rejoin rest of parts if there are multiple delimiters (e.g. commas in the answer)
+                  const front = parts[0].trim();
+                  const back = parts.slice(1).join(delimiter).trim(); 
+                  
+                  // Handle basic quotes if present
+                  const clean = (str) => str.replace(/^"|"$/g, '').replace(/""/g, '"');
+
+                  return { front: clean(front), back: clean(back) };
+              }).filter(Boolean);
+
+              if (parsedCards.length === 0) {
+                  addToast('No valid cards found. Check your delimiter.', 'error');
+              } else {
+                  onImport(parsedCards, false); // false = don't replace deck
+              }
+              setIsProcessing(false);
+          };
+
+          return (
+              <div className="space-y-5">
+                  {/* Mode Toggle */}
+                  <div className="flex p-1 bg-white/10 rounded-xl border border-[--glass-border] relative z-10">
+                      <button 
+                        type="button"
+                        onClick={() => setMode('paste')} 
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${mode === 'paste' ? 'bg-[--accent-color] text-white shadow-md' : 'text-[--text-color-light] hover:text-[--text-color]'}`}
+                      >
+                          Paste Text
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setMode('upload')} 
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${mode === 'upload' ? 'bg-[--accent-color] text-white shadow-md' : 'text-[--text-color-light] hover:text-[--text-color]'}`}
+                      >
+                          Upload File
+                      </button>
+                  </div>
+
+                  {/* Delimiter Selection */}
+                  <div>
+                      <label className="block text-xs font-bold text-[--text-color-light] uppercase mb-2">Delimiter</label>
+                      <div className="flex gap-3">
+                          <button type="button" onClick={() => setDelimiter(',')} className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${delimiter === ',' ? 'border-[--accent-color] bg-[--accent-color]/10 text-[--accent-color]' : 'border-[--glass-border] hover:bg-white/5'}`}>Comma (,)</button>
+                          <button type="button" onClick={() => setDelimiter('\t')} className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${delimiter === '\t' ? 'border-[--accent-color] bg-[--accent-color]/10 text-[--accent-color]' : 'border-[--glass-border] hover:bg-white/5'}`}>Tab (TSV)</button>
+                          <button type="button" onClick={() => setDelimiter(';')} className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${delimiter === ';' ? 'border-[--accent-color] bg-[--accent-color]/10 text-[--accent-color]' : 'border-[--glass-border] hover:bg-white/5'}`}>Semicolon (;)</button>
+                      </div>
+                  </div>
+
+                  {/* Input Area */}
+                  {mode === 'paste' ? (
+                      <div>
+                           <textarea 
+                              value={textInput}
+                              onChange={(e) => setTextInput(e.target.value)}
+                              className="w-full h-32 bg-white/10 border border-[--glass-border] rounded-xl p-3 font-mono text-sm text-[--text-color] focus:outline-none focus:ring-2 focus:ring-[--accent-color]" 
+                              placeholder={`Front${delimiter}Back\nQuestion${delimiter}Answer`}
+                           ></textarea>
+                      </div>
+                  ) : (
+                      <div className="relative border-2 border-dashed border-[--glass-border] rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors">
+                          <Icon name="import" className="w-8 h-8 text-[--text-color-light] mb-2" />
+                          <p className="text-sm font-medium text-[--text-color]">
+                             {file ? file.name : 'Click to upload or drag and drop'}
+                          </p>
+                          <p className="text-xs text-[--text-color-light] mt-1">.csv or .txt files</p>
+                          <input type="file" accept=".csv,.txt,.tsv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      </div>
+                  )}
+
+                  <CuteButton onClick={handleSubmit} disabled={isProcessing} className="w-full !bg-[--accent-color] !text-white">
+                      {isProcessing ? 'Importing...' : 'Import Cards'}
+                  </CuteButton>
+              </div>
+          );
+      }
 
       // --- Main Logic Component ---
       function FlashcardApp() {
@@ -1246,28 +1432,41 @@
           setModal({ type: null });
         };
 
-        // --- NEW: Export Functionality ---
-        const handleExportDeck = () => {
+        // --- MODIFIED: Export Functionality ---
+        const handleExportDeck = (format = 'csv') => {
           if (!activeDeck) return;
           if (cards.length === 0) return addToast('No cards to export.', 'info');
 
-          // Helper to handle commas/quotes in CSV
-          const escapeCsvField = (field) => `"${String(field || '').replace(/"/g, '""')}"`;
+          // Configure based on format
+          const delimiter = format === 'csv' ? ',' : '\t';
+          const extension = format === 'csv' ? 'csv' : 'txt';
+          const mimeType = format === 'csv' ? 'text/csv;charset=utf-8;' : 'text/plain;charset=utf-8;';
+
+          // Helper to handle commas/quotes/tabs
+          const escapeField = (field) => {
+              const str = String(field || '');
+              // If it contains the delimiter, newlines, or quotes, enclose in quotes and escape existing quotes
+              if (str.includes(delimiter) || str.includes('"') || str.includes('\n')) {
+                  return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+          };
           
-          const csvContent = cards
-            .map(c => [escapeCsvField(c.front), escapeCsvField(c.back)].join(','))
+          const content = cards
+            .map(c => [escapeField(c.front), escapeField(c.back)].join(delimiter))
             .join('\n');
           
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const blob = new Blob([content], { type: mimeType });
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.setAttribute("href", url);
-          link.setAttribute("download", `${activeDeck.name}.csv`);
+          link.setAttribute("download", `${activeDeck.name}.${extension}`);
           link.style.visibility = 'hidden';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          addToast('Deck exported successfully.', 'success');
+          addToast(`Deck exported as ${extension.toUpperCase()}`, 'success');
+          setModal({ type: null });
         };
 
         const handleDragStart = useCallback((e, type, id) => {
@@ -1405,8 +1604,8 @@
                                 <CuteButton onClick={() => setModal({ type: 'importCards' })}>
                                     <Icon name="import" className="w-5 h-5"/> Import
                                 </CuteButton>
-                                {/* Export Button Added Here */}
-                                <CuteButton onClick={handleExportDeck}>
+                                {/* Update Export Button to open Modal */}
+                                <CuteButton onClick={() => setModal({ type: 'exportOptions' })}>
                                     <Icon name="export" className="w-5 h-5"/> Export
                                 </CuteButton>
                             </div>
@@ -1523,6 +1722,7 @@
                     modal.type?.includes('edit') ? `Edit ${modal.type.replace('edit', '')}` :
                     modal.type?.includes('delete') ? 'Delete Item' : 
                     modal.type === 'settings' ? 'Theme Settings' :
+                    modal.type === 'exportOptions' ? 'Export Deck' :
                     modal.type === 'importCards' ? 'Import Cards' : ''
                 }
                >
@@ -1563,18 +1763,17 @@
                          <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">Save Card</CuteButton>
                     </form>
                 )}
+                 
+                 {/* NEW: Import Modal Content */}
                  {modal.type === 'importCards' && (
-                     <form onSubmit={(e) => {
-                         e.preventDefault();
-                         const text = e.target.csv.value;
-                         const cards = text.split('\n').map(l => { const [f, b] = l.split(','); return (f && b) ? {front: f.trim(), back: b.trim()} : null; }).filter(Boolean);
-                         handleBulkAddCards(cards, false);
-                     }}>
-                         <p className="text-sm mb-4 text-[--text-color-light]">Paste CSV content (Front, Back):</p>
-                         <textarea name="csv" className="w-full h-32 bg-white/10 border border-[--glass-border] rounded-xl p-3 mb-4 font-mono text-sm" placeholder="Question, Answer&#10;Cat, Gato"></textarea>
-                         <CuteButton type="submit" className="w-full !bg-[--accent-color] !text-white">Import</CuteButton>
-                     </form>
+                     <ImportModalContent onImport={handleBulkAddCards} addToast={addToast} />
                  )}
+
+                 {/* NEW: Export Modal Content */}
+                 {modal.type === 'exportOptions' && (
+                     <ExportModalContent onExport={handleExportDeck} />
+                 )}
+
                  {modal.type === 'settings' && (
                      <SettingsContent activeTheme={activeTheme} setActiveTheme={setActiveTheme} applyTheme={applyTheme} customThemes={customThemes} onThemeSave={handleCustomThemeSave} onThemeDelete={handleCustomThemeDelete} />
                  )}
